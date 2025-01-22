@@ -23,7 +23,6 @@ import (
 	//"github.com/hyperledger/aries-framework-go/pkg/crypto/customtinkcrypto"
 	//"github.com/hyperledger/aries-framework-go/pkg/kms/customlocalkms"
 
-
 	"github.com/hyperledger/aries-framework-go-ext/component/storage/couchdb"
 	"github.com/hyperledger/aries-framework-go-ext/component/storage/mongodb"
 	"github.com/hyperledger/aries-framework-go-ext/component/storage/mysql"
@@ -41,7 +40,6 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/defaults"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/context"
 	"github.com/hyperledger/aries-framework-go/pkg/kms"
-	"github.com/hyperledger/aries-framework-go/pkg/vdr/fabric"
 	"github.com/hyperledger/aries-framework-go/spi/storage"
 )
 
@@ -686,11 +684,14 @@ func getResolverOpts(httpResolvers []string) ([]aries.Option, error) {
 			opts = append(opts, aries.WithVDR(httpVDR))
 		}
 	}*/
-	fabricVDR, err := fabric.New("https://file-server.example.com:9099/connection-profile.json") // TODO UMU added fabric vdr 
-	opts = append(opts, aries.WithVDR(fabricVDR))
-	if err != nil {
-		return nil, fmt.Errorf("failed to setup fabric resolver :  %w", err)
-	}
+	/*
+		fabricVDR, err := fabric.New("https://file-server.example.com:9099/connection-profile.json") // TODO UMU added fabric vdr
+		opts = append(opts, aries.WithVDR(fabricVDR))
+		if err != nil {
+			return nil, fmt.Errorf("failed to setup fabric resolver :  %w", err)
+		}
+
+	*/
 	return opts, nil
 }
 
@@ -923,13 +924,13 @@ func createAriesAgent(parameters *AgentParameters) (*context.Provider, error) {
 			parameters.host, err)
 	}
 	opts = append(opts, aries.WithCrypto(crypto))
-	
+
 	kmsCreator := func(provider kms.Provider) (kms.KeyManager, error) {
 		return customlocalkms.New("local-lock://default/master/key/", provider)
 	}
 	opts = append(opts, aries.WithKMS(kmsCreator))
 	// TODO UMU finishing custom crypto and customlocalkms
-*/
+	*/
 
 	if len(parameters.contextProviderURLs) > 0 {
 		opts = append(opts, aries.WithJSONLDContextProviderURL(parameters.contextProviderURLs...))
