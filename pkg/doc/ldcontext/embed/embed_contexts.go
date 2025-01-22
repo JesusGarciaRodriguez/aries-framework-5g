@@ -56,6 +56,8 @@ var (
 	ldpPSMS2022 []byte
 	//go:embed third_party/umu/poc.jsonld
 	pocContext []byte
+	//go:embed third_party/umu/nancy.jsonld
+	nancyContext []byte
 )
 
 // Contexts contains JSON-LD contexts embedded into a Go binary.
@@ -179,5 +181,10 @@ var Contexts = []ldcontext.Document{ //nolint:gochecknoglobals
 		URL:         "https://ssiproject.inf.um.es/poc/context/v1",
 		DocumentURL: "https://publicpcurl.inf.um.es/poc/context/v1",
 		Content:     pocContext,
+	},
+	{
+		URL:         "https://nancy-identity/context/exampleContext/v1",
+		DocumentURL: "https://nancy-identity/context/exampleContext/v1",
+		Content:     nancyContext,
 	},
 }

@@ -1,0 +1,16 @@
+{
+  "@context": [
+      {"@version": 1.1},
+      "https://www.w3.org/ns/odrl.jsonld",
+      {
+          "ex": "https://nancy-identity/context/",
+          "schema": "https://schema.org/",
+          "NancyCredential": "ex:NancyCredential",
+          "nancyId": "ex:nancyId",
+          "acces5g": "ex:acces5g", 
+          "accessV2X": "ex:accessV2X",
+          "accessLocEng": "ex:accessLocEng",
+          "accesMec": "ex:accesMec"        
+      }
+  ]
+}

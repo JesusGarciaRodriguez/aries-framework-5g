@@ -1,7 +1,6 @@
 package bench
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -121,7 +120,7 @@ func BenchmarkVerify(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		res, err := wallet2.Verify(token2, w.WithRawCredentialToVerify(rawVcBytes))
-		require.Equal(b, res, true)
+		require.Equal(b, true, res)
 		require.NoError(b, err)
 	}
 }
@@ -148,7 +147,7 @@ func BenchmarkVerifyBBS(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		res, err := wallet2.Verify(token2, w.WithRawCredentialToVerify(rawVcBytes))
-		require.Equal(b, res, true)
+		require.Equal(b, true, res)
 		require.NoError(b, err)
 	}
 }
@@ -181,8 +180,8 @@ func BenchmarkDeriveZkDisclosure(b *testing.B) {
 		})
 		require.NoError(b, err)
 		require.NotEmpty(b, dervc)
-		a, _ := dervc.MarshalJSON()
-		fmt.Println(string(a))
+		//a, _ := dervc.MarshalJSON()
+		//fmt.Println(string(a))
 		//verifyPSMSProof(dervc.Proofs, b)
 	}
 }
@@ -250,12 +249,12 @@ func BenchmarkVerifyZkDisclosure(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		res, err := wallet2.Verify(token2, w.WithRawCredentialToVerify(rawDerVcBytes))
-		require.Equal(b, res, true)
+		require.Equal(b, true, res)
 		require.NoError(b, err)
 	}
 }
 
-func BenchmarkVerifykDisclosureBBS(b *testing.B) {
+func BenchmarkVerifyZkDisclosureBBS(b *testing.B) {
 	wallet, token := createOpenWallet(b, sampleUser)
 
 	did := addKeyToWallet(base58BbsKey, token, b, w.BbsBlsSignature2020)
@@ -288,11 +287,12 @@ func BenchmarkVerifykDisclosureBBS(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		res, err := wallet2.Verify(token2, w.WithRawCredentialToVerify(rawDerVcBytes))
-		require.Equal(b, res, true)
+		require.Equal(b, true, res)
 		require.NoError(b, err)
 	}
 }
 
+/*
 func verifyPSMSProof(proofs []verifiable.Proof, b *testing.B) {
 	require.Len(b, proofs, 1)
 	require.NotEmpty(b, proofs[0])
@@ -300,7 +300,7 @@ func verifyPSMSProof(proofs []verifiable.Proof, b *testing.B) {
 	require.NotEmpty(b, proofs[0]["nonce"])
 	require.EqualValues(b, proofs[0]["nonce"], base64.StdEncoding.EncodeToString([]byte(sampleNonce)))
 	require.NotEmpty(b, proofs[0]["proofValue"])
-}
+}*/
 
 func addKeyToWallet(b58key, token string, b *testing.B, scheme string) string {
 	kmgr, err := w.TestHelperKeymanager(token)

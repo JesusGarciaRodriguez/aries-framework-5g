@@ -1,18 +1,19 @@
 {
     "@context": [
       "https://www.w3.org/2018/credentials/v1",
-      "https://www.w3.org/2018/credentials/examples/v1",
       "https://ssiproject.inf.um.es/security/psms/v1",
-      "https://ssiproject.inf.um.es/poc/context/v1"
+      "https://nancy-identity/context/exampleContext/v1",
+      "https://w3id.org/security/bbs/v1"
     ],
-    "type": ["VerifiableCredential", "FluidosCredential"],
+    "type": ["VerifiableCredential", "NancyCredential"],
     "@explicit": true,
     "identifier": {},
     "issuer": {},
     "issuanceDate": {},
     "credentialSubject": {
       "@explicit": true,
-      "holderRole": {}
+      "nancyId": {},
+      "acces5g": {}
     }
   }
   
