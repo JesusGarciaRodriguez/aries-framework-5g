@@ -2,6 +2,7 @@ package poc
 
 import (
 	"encoding/json"
+
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 )
 
@@ -38,15 +39,14 @@ type NewDIDArgs struct {
 }
 type TestingCallResult struct {
 	DoenrolmentMem uint64 `json:"doenrolmentMem,omitempty"`
-	GenerateVPMem uint64 `json:"generateVPMem,omitempty"`
-	VerifyMem uint64 `json:"verifyMem,omitempty"`
+	GenerateVPMem  uint64 `json:"generateVPMem,omitempty"`
+	VerifyMem      uint64 `json:"verifyMem,omitempty"`
 }
+
 // Model for newDID method output
 type NewDIDResult struct {
 	DIDDoc json.RawMessage `json:"didDoc,omitempty"`
 }
-
-
 
 // Model keytype/purpose pair
 type KeyTypePurpose struct {
@@ -56,7 +56,7 @@ type KeyTypePurpose struct {
 
 // Model keytype
 type KeyTypeModel struct {
-	Type  string `json:"keytype,omitempty"`
+	Type  string   `json:"keytype,omitempty"`
 	Attrs []string `json:"attrs,omitempty"`
 }
 
@@ -82,7 +82,7 @@ type IdProof struct {
 
 // Model for GenerateVP method input
 type GenerateVPArgs struct {
-	CredId string `json:"credId,omitempty"` //TODO UMU: How do we decide which credential is gonna be presented?
+	CredId       string       `json:"credId,omitempty"` //TODO UMU: How do we decide which credential is gonna be presented?
 	QueryByFrame QueryByFrame `json:"querybyframe,omitempty"`
 }
 
@@ -92,13 +92,12 @@ type GetVCredentialArgs struct {
 }
 
 type RequestBodyVP struct {
-	CredId string `json:"credId,omitempty"`
-	Frame FrameFluidos `json:"querybyframe,omitempty"`
+	CredId string       `json:"credId,omitempty"`
+	Frame  FrameFluidos `json:"querybyframe,omitempty"`
 }
 
-
 type QueryByFrame struct {
-    Frame FrameFluidos `json:"frame,omitempty"`
+	Frame FrameFluidos `json:"frame,omitempty"`
 }
 
 // type FrameFluidos struct {
@@ -115,27 +114,22 @@ type QueryByFrame struct {
 // }
 
 type FrameFluidos struct {
-	Context           []string `json:"@context,omitempty"`
-	Type              []string `json:"type,omitempty"`
-	Explicit          bool     `json:"@explicit,omitempty"`
-	Identifier        struct{} `json:"identifier,omitempty"`
-	Issuer            struct{} `json:"issuer,omitempty"`
-	IssuanceDate      struct{} `json:"issuanceDate,omitempty"`
+	Context           []string               `json:"@context,omitempty"`
+	Type              []string               `json:"type,omitempty"`
+	Explicit          bool                   `json:"@explicit,omitempty"`
+	Identifier        struct{}               `json:"identifier,omitempty"`
+	Issuer            struct{}               `json:"issuer,omitempty"`
+	IssuanceDate      struct{}               `json:"issuanceDate,omitempty"`
 	CredentialSubject map[string]interface{} `json:"credentialSubject,omitempty"`
 }
 
 // Model for GenerateVP method output
 type GenerateVPResult struct {
 	Results []*verifiable.Presentation `json:"results"`
-	
 }
-
-
-
 
 type GenerateVPResultCustom struct {
 	Results []*json.RawMessage `json:"results,omitempty"`
-	
 }
 
 type GetVCredentialResult struct {
@@ -164,11 +158,32 @@ type VerifyCredentialResult struct {
 	Error string `json:"error,omitempty"`
 }
 
-type GetTrustedIssuerListResult struct	{
+type GetTrustedIssuerListResult struct {
 	TrustedIssuers []TrustedIssuer `json:"trustedIssuers,omitempty"`
 }
 
 type TrustedIssuer struct {
-	DID string `json:"did,omitempty"`
+	DID       string `json:"did,omitempty"`
 	IssuerUrl string `json:"issuerUrl,omitempty"`
+}
+
+type StoreCredentialArgs struct {
+	Credential json.RawMessage `json:"credential,omitempty"`
+}
+
+// Model for VerifyCredential method output
+type StoreCredentialResult struct {
+	Result bool `json:"result,omitempty"`
+
+	Error string `json:"error,omitempty"`
+}
+
+// Model for GenerateVP method input
+type DeriveProofArgs struct {
+	CredId     string                 `json:"credId,omitempty"` //TODO UMU: How do we decide which credential is gonna be presented?
+	QueryFrame map[string]interface{} `json:"querybyframe,omitempty"`
+}
+
+type DeriveProofResult struct {
+	result *verifiable.Credential `json:"credId,omitempty"` //TODO UMU: How do we decide which credential is gonna be presented?
 }
