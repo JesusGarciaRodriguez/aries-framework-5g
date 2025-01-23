@@ -1,0 +1,25 @@
+
+version: '3.9'
+
+services:
+
+    
+  file-server.example.com: # file server for hosting static resources (e.g. JSON-LD contexts)
+      container_name: file-server.example.com
+      image: halverneus/static-file-server:latest
+      environment:
+        - PORT=9099
+        - FOLDER=/data
+        - TLS_CERT=/etc/tls/ec-pubCert.pem
+        - TLS_KEY=/etc/tls/ec-key.pem
+      ports:
+        - "9099:9099"
+      volumes:
+        - ./data:/data
+        - ../keys/tls:/etc/tls
+      networks:
+        - test
+
+networks:
+  test:
+    name: fabric_test

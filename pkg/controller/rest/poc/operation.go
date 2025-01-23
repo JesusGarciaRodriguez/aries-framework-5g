@@ -72,6 +72,8 @@ func (o *Operation) registerHandler() {
 		cmdutil.NewHTTPHandler(GetVCredentialPath, http.MethodPost, o.GetVCredential),
 		cmdutil.NewHTTPHandler(SignJWTContentPath, http.MethodPost, o.SignJWTContent),
 		cmdutil.NewHTTPHandler(VerifyJWTContentPath, http.MethodPost, o.VerifyJWTContent),
+		cmdutil.NewHTTPHandler(StoreCredentialPath, http.MethodPost, o.StoreCredential),
+		cmdutil.NewHTTPHandler(DeriveProofPath, http.MethodPost, o.DeriveProof),
 	}
 }
 

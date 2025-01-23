@@ -167,6 +167,7 @@ func BenchmarkDeriveZkDisclosure(b *testing.B) {
 	vc, err := wallet.Issue(token, files.ExampleRawVC, proofOpts)
 	require.NoError(b, err)
 	rawVcBytes, err := vc.MarshalJSON()
+	//fmt.Println(string(rawVcBytes))
 	require.NoError(b, err)
 	var frameDocPsms map[string]interface{}
 	require.NoError(b, json.Unmarshal(files.SampleFramePsms, &frameDocPsms))

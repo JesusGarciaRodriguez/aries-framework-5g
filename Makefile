@@ -108,6 +108,15 @@ generate-test-keys: clean
 		--entrypoint "/opt/go/src/$(PROJECT_ROOT)/scripts/generate_test_keys.sh" \
 		frapsoft/openssl
 
+.PHONY: generate-test-keys-no-clean
+generate-test-keys-no-clean: 
+	@rm -Rf ./test/bdd/fixtures/keys/tls
+	@mkdir -p -p test/bdd/fixtures/keys/tls
+	@docker run -i --rm \
+		-v $(abspath .):/opt/go/src/$(PROJECT_ROOT) \
+		--entrypoint "/opt/go/src/$(PROJECT_ROOT)/scripts/generate_test_keys.sh" \
+		frapsoft/openssl
+
 .PHONY: generate-test-keys-no-build
 generate-test-keys-no-build: clean-fixtures-only-and-deploy
 	@mkdir -p -p test/bdd/fixtures/keys/tls
@@ -117,7 +126,7 @@ generate-test-keys-no-build: clean-fixtures-only-and-deploy
 		frapsoft/openssl
 
 .PHONY: generate-dpabc-clib
-generate-dpabc-clib: clean
+generate-dpabc-clib: 
 	@docker build -f ./images/agent-rest/Dockerfile_base_image_with_compilation_tools \
 				--build-arg ALPINE_VER=$(ALPINE_VER) \
 				-t basecompilationcontainer .
@@ -165,6 +174,11 @@ run-poc-demo: generate-test-keys generate-dpabc-clib agent-rest-docker sample-we
 	@echo "Starting demo agent rest containers ..."
 	@AGENT_REST_COMPOSE_PATH=test/bdd/fixtures/agent-rest  \
         scripts/run-poc-demo.sh 
+
+.PHONY: build-5g-demo-device 
+build-5g-demo-device: generate-test-keys-no-clean generate-dpabc-clib agent-rest
+	@echo "Built executable"
+
 
 .PHONY: run-poc-demo-no-build  # TODO needed?
 run-poc-demo-no-build: generate-test-keys-no-build
