@@ -1239,28 +1239,6 @@ func (o *Command) DeriveProof(rw io.Writer, req io.Reader) command.Error {
 		})
 		err = o.vcwalletcommand.Close(&l2, reader)
 	}()
-	//Get stored credential from Id
-	//var credID = request.CredId
-	reader, err = getReader(&vcwalletc.GetContentRequest{
-		ContentID:   request.CredId,
-		ContentType: wallet.Credential,
-		WalletAuth:  vcwalletc.WalletAuth{UserID: o.walletuid, Auth: token},
-	})
-
-	var getResponse bytes.Buffer
-	err = o.vcwalletcommand.Get(&getResponse, reader)
-	if err != nil {
-		return command.NewValidationError(DeriveProofRequestErrorCode, fmt.Errorf("retrieve credential error: %w", err))
-	}
-	var parsedResponse vcwalletc.GetContentResponse
-	err = json.NewDecoder(&getResponse).Decode(&parsedResponse)
-	if err != nil {
-		return command.NewValidationError(DeriveProofRequestErrorCode, fmt.Errorf("retrieve credential error: %w", err))
-	}
-
-	if err != nil {
-		return command.NewValidationError(DeriveProofRequestErrorCode, fmt.Errorf("failed to decode stored credential: %w", err))
-	}
 
 	reader, err = getReader(&vcwalletc.DeriveRequest{
 		WalletAuth:         vcwalletc.WalletAuth{UserID: o.walletuid, Auth: token},
@@ -1272,7 +1250,7 @@ func (o *Command) DeriveProof(rw io.Writer, req io.Reader) command.Error {
 	})
 
 	a, _ := json.Marshal(request.QueryFrame)
-	logutil.LogInfo(logger, CommandName, DeriveProofCommandMethod, "Derive for id "+request.CredId+" Nonce "+request.Nonce+" Frame "+string(a))
+	logutil.LogDebug(logger, CommandName, DeriveProofCommandMethod, "Derive for id "+request.CredId+" Nonce "+request.Nonce+" Frame "+string(a))
 
 	var queryResponse bytes.Buffer
 	queryErr := o.vcwalletcommand.Derive(&queryResponse, reader)
@@ -1291,7 +1269,14 @@ func (o *Command) DeriveProof(rw io.Writer, req io.Reader) command.Error {
 		return command.NewValidationError(DeriveProofRequestErrorCode, fmt.Errorf("unmarshal not working: %w", err))
 	}
 
-	command.WriteNillableResponse(rw, &DeriveProofResult{Result: queryParsedResponse.Credential}, logger)
+	res, err := queryParsedResponse.Credential.MarshalJSON()
+	if err != nil {
+		return command.NewValidationError(DeriveProofRequestErrorCode, fmt.Errorf("marshal of credential not working: %w", err))
+	}
+	rawres := json.RawMessage(res)
+	logutil.LogDebug(logger, CommandName, DeriveProofCommandMethod, "Returning cred "+string(res))
+
+	command.WriteNillableResponse(rw, &DeriveProofResult{Result: rawres}, logger)
 
 	logutil.LogInfo(logger, CommandName, DeriveProofCommandMethod, "success")
 

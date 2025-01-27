@@ -186,5 +186,5 @@ type DeriveProofArgs struct {
 }
 
 type DeriveProofResult struct {
-	Result *verifiable.Credential `json:"result,omitempty"` //TODO UMU: How do we decide which credential is gonna be presented?
+	Result json.RawMessage `json:"result,omitempty"` //TODO UMU: How do we decide which credential is gonna be presented?
 }
