@@ -182,8 +182,9 @@ type StoreCredentialResult struct {
 type DeriveProofArgs struct {
 	CredId     string                 `json:"credId,omitempty"` //TODO UMU: How do we decide which credential is gonna be presented?
 	QueryFrame map[string]interface{} `json:"querybyframe,omitempty"`
+	Nonce      string                 `json:"nonce,omitempty"`
 }
 
 type DeriveProofResult struct {
-	result *verifiable.Credential `json:"credId,omitempty"` //TODO UMU: How do we decide which credential is gonna be presented?
+	Result *verifiable.Credential `json:"result,omitempty"` //TODO UMU: How do we decide which credential is gonna be presented?
 }

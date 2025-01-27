@@ -1173,8 +1173,6 @@ func (o *Command) StoreCredential(rw io.Writer, req io.Reader) command.Error {
 		logutil.LogError(logger, CommandName, StoreCredentialCommandMethod, "failed to marshal credential: "+err.Error())
 		return command.NewExecuteError(StoreCredentialRequestErrorCode, fmt.Errorf("failed to marshal credential: %w", err))
 	}
-
-	var response vcwalletc.VerifyResponse
 	reader, err = getReader(&vcwalletc.AddContentRequest{
 		WalletAuth:  vcwalletc.WalletAuth{UserID: o.walletuid, Auth: token},
 		ContentType: wallet.Credential,
@@ -1191,10 +1189,6 @@ func (o *Command) StoreCredential(rw io.Writer, req io.Reader) command.Error {
 	verifyMem = m.Sys
 	if err != nil {
 		return command.NewExecuteError(StoreCredentialRequestErrorCode, fmt.Errorf("failed to store credential: %w", err))
-	}
-	err = json.NewDecoder(&l2).Decode(&response)
-	if err != nil {
-		return command.NewExecuteError(StoreCredentialRequestErrorCode, fmt.Errorf("failed to decode store response: %w", err))
 	}
 	var result string
 	logutil.LogDebug(logger, CommandName, StoreCredentialCommandMethod, "credential store response:"+result)
@@ -1273,11 +1267,15 @@ func (o *Command) DeriveProof(rw io.Writer, req io.Reader) command.Error {
 		StoredCredentialID: request.CredId,
 		DeriveOptions: &wallet.DeriveOptions{
 			Frame: request.QueryFrame,
+			Nonce: request.Nonce,
 		},
 	})
 
+	a, _ := json.Marshal(request.QueryFrame)
+	logutil.LogInfo(logger, CommandName, DeriveProofCommandMethod, "Derive for id "+request.CredId+" Nonce "+request.Nonce+" Frame "+string(a))
+
 	var queryResponse bytes.Buffer
-	queryErr := o.vcwalletcommand.Query(&queryResponse, reader)
+	queryErr := o.vcwalletcommand.Derive(&queryResponse, reader)
 	if queryErr != nil {
 		return command.NewValidationError(DeriveProofRequestErrorCode, fmt.Errorf("query response not working: %w", queryErr))
 	}
@@ -1293,7 +1291,7 @@ func (o *Command) DeriveProof(rw io.Writer, req io.Reader) command.Error {
 		return command.NewValidationError(DeriveProofRequestErrorCode, fmt.Errorf("unmarshal not working: %w", err))
 	}
 
-	command.WriteNillableResponse(rw, &DeriveProofResult{result: queryParsedResponse.Credential}, logger)
+	command.WriteNillableResponse(rw, &DeriveProofResult{Result: queryParsedResponse.Credential}, logger)
 
 	logutil.LogInfo(logger, CommandName, DeriveProofCommandMethod, "success")
 
