@@ -58,6 +58,10 @@ var (
 	pocContext []byte
 	//go:embed third_party/umu/nancy.jsonld
 	nancyContext []byte
+	//go:embed startup/credentialexamples.jsonld
+	credentialExamplesContext []byte
+	//go:embed startup/odrlpolicy.jsonld
+	odrlContext []byte
 )
 
 // Contexts contains JSON-LD contexts embedded into a Go binary.
@@ -186,5 +190,15 @@ var Contexts = []ldcontext.Document{ //nolint:gochecknoglobals
 		URL:         "https://nancy-identity/context/exampleContext/v1",
 		DocumentURL: "https://nancy-identity/context/exampleContext/v1",
 		Content:     nancyContext,
+	},
+	{
+		URL:         "https://www.w3.org/2018/credentials/examples/v1",
+		DocumentURL: "https://www.w3.org/2018/credentials/examples/v1",
+		Content:     credentialExamplesContext,
+	},
+	{
+		URL:         "https://www.w3.org/ns/odrl.jsonld",
+		DocumentURL: "https://www.w3.org/ns/odrl.jsonld",
+		Content:     odrlContext,
 	},
 }
