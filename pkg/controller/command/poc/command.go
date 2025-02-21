@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"runtime"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/hyperledger/aries-framework-go/pkg/common/log"
@@ -942,13 +941,28 @@ func (o *Command) VerifyCredential(rw io.Writer, req io.Reader) command.Error {
 	}
 
 	var response vcwalletc.VerifyResponse
-	replaceAll := strings.ReplaceAll(request.CredentialString, "\\", "")
-	bytearray := []byte(replaceAll)
-	reader, err = getReader(&vcwalletc.VerifyRequest{ // TODO UMU: This should be ProveRequest?
-		WalletAuth:   vcwalletc.WalletAuth{UserID: o.walletuid, Auth: token},
-		Presentation: bytearray,
-	})
-	logutil.LogDebug(logger, CommandName, VerifyCredentialCommandMethod, "what am i verifying? "+replaceAll)
+
+	useCred := true
+	if request.Credential == nil {
+		useCred = false
+		if request.Presentation == nil {
+			logutil.LogError(logger, CommandName, VerifyCredentialCommandMethod, "must include credential or presentation in request")
+			return command.NewValidationError(VerifyCredentialRequestErrorCode, fmt.Errorf("must include credential or presentation in request"))
+		}
+	}
+
+	vcwalletcommandrequest := vcwalletc.VerifyRequest{
+		WalletAuth: vcwalletc.WalletAuth{UserID: o.walletuid, Auth: token},
+	}
+	if useCred {
+		vcwalletcommandrequest.RawCredential = request.Credential
+		logutil.LogDebug(logger, CommandName, VerifyCredentialCommandMethod, "what am i verifying? "+string(vcwalletcommandrequest.RawCredential))
+	} else {
+		vcwalletcommandrequest.Presentation = request.Presentation
+		logutil.LogDebug(logger, CommandName, VerifyCredentialCommandMethod, "what am i verifying? "+string(vcwalletcommandrequest.Presentation))
+
+	}
+	reader, err = getReader(&vcwalletcommandrequest)
 
 	//golang find and replace char in string
 	if err != nil {
@@ -956,11 +970,9 @@ func (o *Command) VerifyCredential(rw io.Writer, req io.Reader) command.Error {
 	}
 	var l2 bytes.Buffer
 	err = o.vcwalletcommand.Verify(&l2, reader)
-	var m runtime.MemStats
-	runtime.ReadMemStats(&m)
-	verifyMem = m.Sys
 	if err != nil {
-		return command.NewValidationError(VerifyCredentialRequestErrorCode, fmt.Errorf("failed to verify credential: %w", err))
+		command.WriteNillableResponse(rw, &VerifyCredentialResult{Result: false, Error: err.Error()}, logger)
+		return nil
 	}
 	err = json.NewDecoder(&l2).Decode(&response)
 	if err != nil {
@@ -970,12 +982,12 @@ func (o *Command) VerifyCredential(rw io.Writer, req io.Reader) command.Error {
 	if !response.Verified {
 		result = "not verified"
 		//return command.NewValidationError(VerifyCredentialRequestErrorCode, fmt.Errorf("failed to verify credential: %s", response.Error))
-		logutil.LogDebug(logger, CommandName, VerifyCredentialCommandMethod, "credential verified response:"+result)
-		command.WriteNillableResponse(rw, &VerifyCredentialResult{Result: response.Verified, Error: response.Error}, logger)
+		logutil.LogDebug(logger, CommandName, VerifyCredentialCommandMethod, "credential verified response: "+result)
+		command.WriteNillableResponse(rw, &VerifyCredentialResult{Result: false, Error: response.Error}, logger)
 		return nil
 	}
 	result = "verified"
-	logutil.LogDebug(logger, CommandName, VerifyCredentialCommandMethod, "credential verified response:"+result)
+	logutil.LogDebug(logger, CommandName, VerifyCredentialCommandMethod, "credential verified response: "+result)
 	command.WriteNillableResponse(rw, &VerifyCredentialResult{Result: response.Verified}, logger)
 	return nil
 }
@@ -1258,25 +1270,18 @@ func (o *Command) DeriveProof(rw io.Writer, req io.Reader) command.Error {
 		return command.NewValidationError(DeriveProofRequestErrorCode, fmt.Errorf("query response not working: %w", queryErr))
 	}
 
-	var m runtime.MemStats
-	runtime.ReadMemStats(&m)
-	generateVPMem = m.Sys
+	var queryParsedResponse DeriveProofWalletResult
 
-	var queryParsedResponse vcwalletc.DeriveResponse
-
-	err = json.Unmarshal(queryResponse.Bytes(), &queryParsedResponse)
+	err = json.NewDecoder(&queryResponse).Decode(&queryParsedResponse)
 	if err != nil {
-		return command.NewValidationError(DeriveProofRequestErrorCode, fmt.Errorf("unmarshal not working: %w", err))
+		return command.NewValidationError(AcceptEnrolmentRequestErrorCode, fmt.Errorf("issuance error: %w", err))
 	}
+	//XXXX Return result
+	//command.WriteNillableResponse(rw, &queryParsedResponse, logger)
 
-	res, err := queryParsedResponse.Credential.MarshalJSON()
-	if err != nil {
-		return command.NewValidationError(DeriveProofRequestErrorCode, fmt.Errorf("marshal of credential not working: %w", err))
-	}
-	rawres := json.RawMessage(res)
-	logutil.LogDebug(logger, CommandName, DeriveProofCommandMethod, "Returning cred "+string(res))
+	logutil.LogDebug(logger, CommandName, DeriveProofCommandMethod, "Returning cred "+string(queryParsedResponse.Credential))
 
-	command.WriteNillableResponse(rw, &DeriveProofResult{Result: rawres}, logger)
+	command.WriteNillableResponse(rw, &DeriveProofResult{Result: queryParsedResponse.Credential}, logger)
 
 	logutil.LogInfo(logger, CommandName, DeriveProofCommandMethod, "success")
 

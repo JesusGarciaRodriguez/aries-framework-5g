@@ -167,15 +167,19 @@ func BenchmarkDeriveZkDisclosure(b *testing.B) {
 	vc, err := wallet.Issue(token, files.ExampleRawVC, proofOpts)
 	require.NoError(b, err)
 	rawVcBytes, err := vc.MarshalJSON()
-	//fmt.Println(string(rawVcBytes))
+	fmt.Println(string(rawVcBytes))
 	require.NoError(b, err)
 	var frameDocPsms map[string]interface{}
 	require.NoError(b, json.Unmarshal(files.SampleFramePsms, &frameDocPsms))
-
+	a := json.RawMessage(rawVcBytes)
+	fmt.Println(string(files.SampleFramePsms))
+	err = wallet.Add(token, w.Credential, a)
+	require.NoError(b, err)
 	defer wallet.Close()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		dervc, err := wallet.Derive(token, w.FromRawCredential(rawVcBytes), &w.DeriveOptions{
+
+		dervc, err := wallet.Derive(token, w.FromStoredCredential("http://example/credentials/18723"), &w.DeriveOptions{
 			Nonce: sampleNonce,
 			Frame: frameDocPsms,
 		})

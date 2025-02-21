@@ -148,7 +148,8 @@ type AcceptEnrolmentResult struct {
 
 // Model for VerfyCredential method input
 type VerifyCredentialArgs struct {
-	CredentialString string `json:"credential,omitempty"`
+	Credential   json.RawMessage `json:"credential,omitempty"`
+	Presentation json.RawMessage `json:"presentation,omitempty"`
 }
 
 // Model for VerifyCredential method output
@@ -180,11 +181,15 @@ type StoreCredentialResult struct {
 
 // Model for GenerateVP method input
 type DeriveProofArgs struct {
-	CredId     string                 `json:"credId,omitempty"` //TODO UMU: How do we decide which credential is gonna be presented?
+	CredId     string                 `json:"credId,omitempty"`
 	QueryFrame map[string]interface{} `json:"querybyframe,omitempty"`
 	Nonce      string                 `json:"nonce,omitempty"`
 }
 
+type DeriveProofWalletResult struct {
+	Credential json.RawMessage `json:"credential,omitempty"`
+}
+
 type DeriveProofResult struct {
-	Result json.RawMessage `json:"result,omitempty"` //TODO UMU: How do we decide which credential is gonna be presented?
+	Result json.RawMessage `json:"result,omitempty"`
 }
