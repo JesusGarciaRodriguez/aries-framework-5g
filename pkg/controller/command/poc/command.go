@@ -60,7 +60,7 @@ const (
 	GenerateVPCommandMethod        = "GenerateVP"
 	GetVCredentialCommandMethod    = "GetVCredential"
 	AcceptEnrolmentCommandMethod   = "AcceptEnrolment"
-	VerifyCredentialCommandMethod  = "ValidateVP"
+	VerifyCredentialCommandMethod  = "Verify"
 	TestingCallMethod              = "TestingCall"
 	GetTrustedIssuerListMethod     = "GetTrustedIssuerList"
 	SignJWTContentCommandMethod    = "SignJWTContent"
@@ -971,11 +971,13 @@ func (o *Command) VerifyCredential(rw io.Writer, req io.Reader) command.Error {
 	var l2 bytes.Buffer
 	err = o.vcwalletcommand.Verify(&l2, reader)
 	if err != nil {
+		logutil.LogDebug(logger, CommandName, VerifyCredentialCommandMethod, "error in Verify")
 		command.WriteNillableResponse(rw, &VerifyCredentialResult{Result: false, Error: err.Error()}, logger)
 		return nil
 	}
 	err = json.NewDecoder(&l2).Decode(&response)
 	if err != nil {
+		logutil.LogDebug(logger, CommandName, VerifyCredentialCommandMethod, "error in Decode verify Response")
 		return command.NewValidationError(VerifyCredentialRequestErrorCode, fmt.Errorf("failed to decode verify response: %w", err))
 	}
 	var result string
@@ -983,7 +985,7 @@ func (o *Command) VerifyCredential(rw io.Writer, req io.Reader) command.Error {
 		result = "not verified"
 		//return command.NewValidationError(VerifyCredentialRequestErrorCode, fmt.Errorf("failed to verify credential: %s", response.Error))
 		logutil.LogDebug(logger, CommandName, VerifyCredentialCommandMethod, "credential verified response: "+result)
-		command.WriteNillableResponse(rw, &VerifyCredentialResult{Result: false, Error: response.Error}, logger)
+		command.WriteNillableResponse(rw, &VerifyCredentialResult{Result: false, Error: "not valid: " + response.Error}, logger)
 		return nil
 	}
 	result = "verified"
