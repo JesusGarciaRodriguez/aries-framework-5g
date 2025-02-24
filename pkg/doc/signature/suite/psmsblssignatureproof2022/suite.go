@@ -131,7 +131,36 @@ func parseSignedIdentityAttributes(doc string) ([]string, []string) {
 			}
 		}
 	}
-	return attrnames, allattrs
+	// UMU Check Array logic, basically if repeated, merge
+	resultNames := make([]string, 0)
+	resultValues := make([]string, 0)
+	if len(allattrs) != len(attrnames) {
+		panic("should never happen")
+	}
+	i := 0
+	for i < len(attrnames) {
+		// We start the loop to treat a new attribute
+		//While next attr is same "merge"
+		j := i
+		for j < len(attrnames)-1 && attrnames[j] == attrnames[j+1] {
+			j++
+		}
+		if j == i { //No array attribute, just one name "equal"
+			resultNames = append(resultNames, attrnames[i])
+			resultValues = append(resultValues, allattrs[i])
+		} else { // If we reach this point we know there are multiple and j=last index
+			resultingValue := "["
+			for k := i; k <= j; k++ {
+				resultingValue += allattrs[k] + ","
+			}
+			resultingValue = strings.TrimSuffix(resultingValue, ",") + "]"
+			resultNames = append(resultNames, attrnames[i])
+			resultValues = append(resultValues, resultingValue)
+			i = j //Update index to last occurence of attribute
+		}
+		i++ //update the index because of append
+	}
+	return resultNames, resultValues
 }
 
 func parseJsonAttribute(doc string, identifier string) string {

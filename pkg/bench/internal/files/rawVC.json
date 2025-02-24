@@ -8,7 +8,7 @@
   "credentialSubject": {
     "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
     "nancyId": "zbASDASDjfasfasfasfiasfjasfjioasfjas0asjfebfeb1f712ebc6f1c276e12ec21",
-    "acces5g": "99940", 
+    "acces5g": ["99940","99941"], 
     "accessV2X": true,
     "accessLocEng": false,
     "accesMec": true       
