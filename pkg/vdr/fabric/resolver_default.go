@@ -7,7 +7,7 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package fabric
+package cached_fabric
 
 import diddoc "github.com/hyperledger/aries-framework-go/pkg/doc/did"
 

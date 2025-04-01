@@ -24,17 +24,6 @@ const (
 	didLDJson      = "application/did+ld+json"
 )
 
-// resolveDID makes DID resolution via FABRIC.
-func (v *VDR) resolveDID(didID string) ([]byte, error) {
-	v.connectGateway()
-	result, err := v.contract.EvaluateTransaction(SC_METHOD_RESOLVE_DID, didID)
-	//s := string(result)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to evaluate transaction: %s\n", err)
-	}
-	return result, nil
-}
-
 // Read implements didresolver.DidMethod.Read interface (https://w3c-ccg.github.io/did-resolution/#resolving-input)
 func (v *VDR) Read(didID string, opts ...vdrapi.DIDMethodOption) (*did.DocResolution, error) { //nolint: funlen,gocyclo
 	// get the document from the store
@@ -63,6 +52,7 @@ func (v *VDR) Get(id string) (*did.Doc, error) {
 
 	return assembleDocFromDeltas(deltas)
 }
+
 func (v *VDR) getDeltas(id string) ([]docDelta, error) {
 	val, err := v.resolveDID(id)
 	if errors.Is(err, storage.ErrDataNotFound) {
@@ -82,6 +72,18 @@ func (v *VDR) getDeltas(id string) ([]docDelta, error) {
 
 	return deltas, nil
 }
+
+// resolveDID makes DID resolution via FABRIC.
+func (v *VDR) resolveDID(didID string) ([]byte, error) {
+	v.connectGateway()
+	result, err := v.contract.EvaluateTransaction(SC_METHOD_RESOLVE_DID, didID)
+	//s := string(result)
+	if err != nil {
+		return nil, fmt.Errorf("failed to evaluate transaction: %s", err)
+	}
+	return result, nil
+}
+
 func assembleDocFromDeltas(deltas []docDelta) (*did.Doc, error) {
 	// For now, assume storage contains only one delta(genesis document)
 	delta := deltas[0]
