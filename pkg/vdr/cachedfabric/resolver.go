@@ -3,7 +3,7 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package cached_fabric
+package cachedfabric
 
 import (
 	"encoding/base64"
@@ -26,6 +26,15 @@ const (
 
 // Read implements didresolver.DidMethod.Read interface (https://w3c-ccg.github.io/did-resolution/#resolving-input)
 func (v *VDR) Read(didID string, opts ...vdrapi.DIDMethodOption) (*did.DocResolution, error) { //nolint: funlen,gocyclo
+	// Check Caché for document
+	isStored, cachedDoc, err := v.cache.RetrieveDidDoc(didID)
+	if err != nil {
+		return nil, fmt.Errorf("fetching data from cache failed: %w", err)
+	}
+	if isStored {
+		return &did.DocResolution{Context: []string{schemaResV1}, DIDDocument: cachedDoc}, nil
+	}
+
 	// get the document from the store
 	doc, err := v.Get(didID)
 	if err != nil {
@@ -36,6 +45,10 @@ func (v *VDR) Read(didID string, opts ...vdrapi.DIDMethodOption) (*did.DocResolu
 		return nil, vdrapi.ErrNotFound
 	}
 
+	err = v.cache.StoreDidDoc(doc)
+	if err != nil {
+		return nil, fmt.Errorf("storing data in cache failed: %w", err)
+	}
 	return &did.DocResolution{Context: []string{schemaResV1}, DIDDocument: doc}, nil
 }
 

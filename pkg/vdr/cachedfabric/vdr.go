@@ -4,7 +4,7 @@ Copyright SecureKey Technologies Inc. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package cached_fabric
+package cachedfabric
 
 import (
 	"encoding/json"
@@ -12,6 +12,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/hyperledger/fabric-sdk-go/pkg/core/config"
@@ -20,6 +21,8 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/common/log"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	vdrapi "github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
+	"github.com/hyperledger/aries-framework-go/pkg/store/seccache"
+	"github.com/hyperledger/aries-framework-go/pkg/store/seccache/memcache"
 )
 
 var logger = log.New("aries-framework/vdr/fabric")
@@ -37,19 +40,20 @@ const (
 	// DefaultServiceEndpoint default service endpoint.
 	DefaultServiceEndpoint = "defaultServiceEndpoint"
 	didMethod              = "fabric"
+	CACHE_ENV_KEY          = "CACHE"
 )
 
 // VDR via HTTP(s) endpoint.
 type VDR struct {
 	endpointURL      string
 	client           *http.Client
-	accept           Accept
 	resolveAuthToken string
 	network          *gateway.Network
 	contract         *gateway.Contract
 	config           []byte
 	wallet           *gateway.Wallet
 	gw               *gateway.Gateway
+	cache            seccache.SecureCache
 }
 
 // Accept is method to accept did method.
@@ -57,7 +61,29 @@ type Accept func(method string) bool
 
 // New creates new DID Resolver.
 func New(configURL string, opts ...Option) (*VDR, error) {
-	v := &VDR{client: &http.Client{}, accept: func(method string) bool { return true }} // TODO change?
+	v := &VDR{client: &http.Client{}}
+
+	value, _ := os.LookupEnv(CACHE_ENV_KEY) //If not set value will be empty string which is treated by default case
+	switch value {
+	case "NOOP":
+		cache, err := seccache.NewNoOpCache()
+		if err != nil {
+			return nil, fmt.Errorf("create cache: %w", err)
+		}
+		v.cache = cache
+	case "MEM":
+		cache, err := memcache.New()
+		if err != nil {
+			return nil, fmt.Errorf("create cache: %w", err)
+		}
+		v.cache = cache
+	default:
+		cache, err := seccache.NewNoOpCache()
+		if err != nil {
+			return nil, fmt.Errorf("create cache: %w", err)
+		}
+		v.cache = cache
+	}
 
 	req, err := http.NewRequest(http.MethodGet, configURL, nil)
 	if err != nil {
