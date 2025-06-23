@@ -87,9 +87,6 @@ func New(configURL string, opts ...Option) (*VDR, error) {
 		return nil, fmt.Errorf("Failed to readAll bytes from resp.body: %w", err)
 	}
 	v.config = gotBody
-	v.accept = func(method string) bool {
-		return method == didMethod
-	}
 
 	return v, nil
 }

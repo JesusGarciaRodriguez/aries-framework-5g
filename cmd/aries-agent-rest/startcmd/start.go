@@ -41,6 +41,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/framework/context"
 	"github.com/hyperledger/aries-framework-go/pkg/kms"
 	"github.com/hyperledger/aries-framework-go/spi/storage"
+	"github.com/hyperledger/aries-framework-go/pkg/vdr/cachedfabric"
 )
 
 const (
@@ -218,6 +219,8 @@ const (
 	databaseTypeMongoDBOption    = "mongodb"
 	databaseTypeMySQLOption      = "mysql"
 	databaseTypePostgreSQLOption = "postgresql"
+
+	fabricConnectionProfileEnvKey   = "CONNECTION_PROFILE_PATH"
 )
 
 var (
@@ -684,14 +687,14 @@ func getResolverOpts(httpResolvers []string) ([]aries.Option, error) {
 			opts = append(opts, aries.WithVDR(httpVDR))
 		}
 	}*/
-	/*
-		fabricVDR, err := fabric.New("https://file-server.example.com:9099/connection-profile.json") // TODO UMU added fabric vdr
+	connProfPath, isSet := os.LookupEnv(fabricConnectionProfileEnvKey)
+	if isSet && connProfPath!=""{
+		fabricVDR, err := cachedfabric.New(connProfPath) // TODO UMU added fabric vdr
 		opts = append(opts, aries.WithVDR(fabricVDR))
 		if err != nil {
 			return nil, fmt.Errorf("failed to setup fabric resolver :  %w", err)
 		}
-
-	*/
+	}
 	return opts, nil
 }
 

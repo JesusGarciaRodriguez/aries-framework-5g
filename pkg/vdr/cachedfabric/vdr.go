@@ -10,8 +10,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -47,6 +47,7 @@ const (
 type VDR struct {
 	endpointURL      string
 	client           *http.Client
+	accept           Accept
 	resolveAuthToken string
 	network          *gateway.Network
 	contract         *gateway.Contract
@@ -85,39 +86,59 @@ func New(configURL string, opts ...Option) (*VDR, error) {
 		v.cache = cache
 	}
 
-	req, err := http.NewRequest(http.MethodGet, configURL, nil)
+	config, err := getFileContent(configURL, v.client)
+	v.config = config
 	if err != nil {
-		return nil, fmt.Errorf("HTTP create get request failed: %w", err)
+		return nil, fmt.Errorf("failed to get file content for connection profile: %w", err)
 	}
-
-	resp, err := v.client.Do(req) // config.json
-	if err != nil {
-		return nil, fmt.Errorf("httpClient do: %w", err)
-	}
-
-	defer func() {
-		e := resp.Body.Close()
-		if e != nil {
-			logger.Errorf("Failed to close response body: %s", e.Error())
-		}
-	}()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("response status code: %d", resp.StatusCode)
-	}
-
-	var gotBody []byte
-
-	gotBody, err = ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to readAll bytes from resp.body: %w", err)
-	}
-	v.config = gotBody
 	v.accept = func(method string) bool {
 		return method == didMethod
 	}
 
 	return v, nil
+}
+
+// isURL checks if the input string is a valid HTTP(S) URL
+func isURL(str string) bool {
+	u, err := url.Parse(str)
+	return err == nil && (u.Scheme == "http" || u.Scheme == "https")
+}
+
+// getFileContent retrieves content from a URL or filesystem path
+func getFileContent(pathOrURL string, client *http.Client) ([]byte, error) {
+	if isURL(pathOrURL) {
+		req, err := http.NewRequest(http.MethodGet, pathOrURL, nil)
+		if err != nil {
+			return nil, fmt.Errorf("HTTP create get request failed: %w", err)
+		}
+
+		resp, err := client.Do(req) // config.json
+		if err != nil {
+			return nil, fmt.Errorf("httpClient do: %w", err)
+		}
+
+		defer func() {
+			e := resp.Body.Close()
+			if e != nil {
+				logger.Errorf("Failed to close response body: %s", e.Error())
+			}
+		}()
+
+		if resp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("response status code: %d", resp.StatusCode)
+		}
+
+		var gotBody []byte
+
+		gotBody, err = io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to readAll bytes from resp.body: %w", err)
+		}
+		return gotBody, nil
+	}
+
+	// Read from local file
+	return os.ReadFile(pathOrURL)
 }
 
 // Accept did method - attempt to resolve any method.
