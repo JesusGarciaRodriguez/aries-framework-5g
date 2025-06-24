@@ -40,6 +40,9 @@ cd <directory-aries-framework>/scripts
 BIN_PATH=../build/bin bash run-5g-demo-device.sh
 ```
 
+### Connecting to fabric
+To be able to connect to Hyperledger Fabric Blockchain as a VDR, you need to copy the proper connection-profile.json file and specify the location in the environment variable (default is <directory-aries-framework>/test/bdd/fixtures/data/connection-profile.json). Additionally, you will probably need to change /etc/hosts to point to the proper IP(s). The script <directory-aries-framework>/test/5gtests/modifyetchosts.sh can help ease the process.
+
 ## Benchmark
 A set of benchmarks for the crypto operations within the wallet (sign,derive,verify credentials) can be run:
 ```
@@ -50,7 +53,16 @@ go test -bench=BenchmarkKeygen -benchtime=100x (to specify a benchmark method)
 ```
 
 ## Testing
-To do a quick test of the functionality, the following REST petitions can be sent:
+In the folder <directory-aries-framework>/test/5gtests, there are some scripts to do quick tests through curl commands:
+- generateDIDissuer.sh: Used to generate a DID (and the corresponding keys) for issuance
+- issuevc.sh: Direct call to issuer to get a VC
+- requestvcfromdevice.sh: Call the device wallet that will internally interact with the issuer to get a VC
+- storecred.sh: Store a VC in the wallet
+- derive.sh: Derive VC with ZK proof from policy and stored credential
+- verify.sh: Verify a VC
+- verify_failure.sh: A test VC that is wrong in purpose to get a negative verification response
+
+To do a quick test of the functionality, the following REST petitions can be sent (there is also bash scripts for these commands in test/5gtests):
 StoreCredential:
 ```
 curl --location 'http://localhost:8082/nancy/idm/storeCredential' \

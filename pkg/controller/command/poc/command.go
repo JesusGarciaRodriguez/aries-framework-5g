@@ -242,18 +242,19 @@ func (o *Command) NewDID(rw io.Writer, req io.Reader) command.Error {
 			logutil.LogInfo(logger, CommandName, NewDIDCommandMethod, "invalid key type")
 			return command.NewValidationError(InvalidRequestErrorCode, fmt.Errorf("invalid key type"))
 		}
-		//parse number of keypurpose.keytype.Attrs for increment in 1
-		if len(keyPurpose.KeyType.Attrs) > 0 {
-			nAttrs := keyPurpose.KeyType.Attrs[0]
-			nAug, err := strconv.Atoi(nAttrs)
-			if err != nil {
-				logutil.LogInfo(logger, CommandName, NewDIDCommandMethod, "parse number of key purpose key type attrs error")
-				return command.NewValidationError(NewDIDRequestErrorCode, fmt.Errorf("parse number of key purpose key type attrs error: %w", err))
-			}
-			nAug = nAug + 1
-			newAttrNumber := strconv.Itoa(nAug)
-			keyPurpose.KeyType.Attrs[0] = newAttrNumber
-		}
+		/*
+			//parse number of keypurpose.keytype.Attrs for increment in 1
+			if len(keyPurpose.KeyType.Attrs) > 0 {
+				nAttrs := keyPurpose.KeyType.Attrs[0]
+				nAug, err := strconv.Atoi(nAttrs)
+				if err != nil {
+					logutil.LogInfo(logger, CommandName, NewDIDCommandMethod, "parse number of key purpose key type attrs error")
+					return command.NewValidationError(NewDIDRequestErrorCode, fmt.Errorf("parse number of key purpose key type attrs error: %w", err))
+				}
+				nAug = nAug + 1
+				newAttrNumber := strconv.Itoa(nAug)
+				keyPurpose.KeyType.Attrs[0] = newAttrNumber
+			}*/
 		reader, err = getReader(&vcwalletc.CreateKeyPairRequest{
 			KeyType:    kt,
 			WalletAuth: vcwalletc.WalletAuth{UserID: o.walletuid, Auth: token},
@@ -621,7 +622,7 @@ func (o *Command) DoDeviceEnrolment(rw io.Writer, req io.Reader) command.Error {
 		return command.NewValidationError(InvalidRequestErrorCode, fmt.Errorf(errEmptyIdProofs))
 	}
 
-	identityProods := request.IdProofs
+	identityProofs := request.IdProofs
 
 	//add current did to idProofs and sign with DID proofData with signJWT function
 
@@ -655,12 +656,12 @@ func (o *Command) DoDeviceEnrolment(rw io.Writer, req io.Reader) command.Error {
 
 	//proofData := o.signJWT(token)
 	//proofDataBytes := json.RawMessage(proofData)
-	identityProods = append(identityProods, IdProof{AttrName: "DID", AttrValue: o.currentDID})
+	//identityProofs = append(identityProofs, IdProof{AttrName: "DID", AttrValue: o.currentDID})
 
 	// Do a post for AcceptEnrolmentResult to specified url
-	acceptEnrolmentRequest := AcceptEnrolmentArgs{IdProofs: identityProods}
+	acceptEnrolmentRequest := AcceptEnrolmentArgs{IdProofs: identityProofs}
 	jsonBody, err := json.Marshal(acceptEnrolmentRequest)
-
+	fmt.Println(request.Url)
 	if err != nil {
 		logutil.LogInfo(logger, CommandName, DoDeviceEnrolmentCommandMethod, "could not generate request body")
 		return command.NewValidationError(DoDeviceEnrolmentRequestErrorCode, fmt.Errorf("could not generate request body: %w", err))
@@ -668,7 +669,7 @@ func (o *Command) DoDeviceEnrolment(rw io.Writer, req io.Reader) command.Error {
 
 	//testing https insecure(for poc at the moment)
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	resp, err := http.Post(request.Url+"/fluidos/idm/acceptEnrolment", "application/json", bytes.NewBuffer(jsonBody))
+	resp, err := http.Post(request.Url+"/nancy/idm/acceptEnrolment", "application/json", bytes.NewBuffer(jsonBody))
 
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
@@ -678,14 +679,21 @@ func (o *Command) DoDeviceEnrolment(rw io.Writer, req io.Reader) command.Error {
 		logutil.LogInfo(logger, CommandName, DoDeviceEnrolmentCommandMethod, "could not complete AcceptEnrolment POST request")
 		return command.NewValidationError(DoDeviceEnrolmentRequestErrorCode, fmt.Errorf("could not complete AcceptEnrolment POST request: %w", err))
 	}
+	// TODO Check Errors like 404 etc.
 	var res AcceptEnrolmentResult
 	err = json.NewDecoder(resp.Body).Decode(&res)
 	if err != nil {
 		logutil.LogInfo(logger, CommandName, DoDeviceEnrolmentCommandMethod, "could not parse AcceptEnrolment POST result")
+		if b, err := io.ReadAll(resp.Body); err == nil {
+			logutil.LogInfo(logger, CommandName, DoDeviceEnrolmentCommandMethod, string(b)) //added por alumno
+		}
 		return command.NewValidationError(DoDeviceEnrolmentRequestErrorCode, fmt.Errorf("could not parse AcceptEnrolment POST result: %w", err))
 	}
 	if len(res.Credential) == 0 { //TODO UMU Better error message
 		logutil.LogInfo(logger, CommandName, DoDeviceEnrolmentCommandMethod, "credential issuance was not completed")
+		if b, err := io.ReadAll(resp.Body); err == nil {
+			logutil.LogInfo(logger, CommandName, DoDeviceEnrolmentCommandMethod, "status "+resp.Status+"body "+string(b)) //added por alumno
+		}
 		return command.NewValidationError(DoDeviceEnrolmentRequestErrorCode, fmt.Errorf("credential issuance was not completed: %s", res))
 	}
 
@@ -1035,7 +1043,7 @@ func (o *Command) AcceptEnrolment(rw io.Writer, req io.Reader) command.Error {
 		err = o.vcwalletcommand.Close(&l2, reader)
 	}()
 	//Initialize credential for issuance
-	baseCredString := "{\"@context\":[\"https://www.w3.org/2018/credentials/v1\",\"https://www.w3.org/2018/credentials/examples/v1\",\"https://ssiproject.inf.um.es/security/psms/v1\",\"https://ssiproject.inf.um.es/poc/context/v1\"],\"type\":[\"VerifiableCredential\",\"FluidosCredential\"]}"
+	baseCredString := "{\"@context\":[\"https://www.w3.org/2018/credentials/v1\",\"https://www.w3.org/2018/credentials/examples/v1\",\"https://ssiproject.inf.um.es/security/psms/v1\",\"https://nancy-identity/context/exampleContext/v1\"],\"type\":[\"VerifiableCredential\",\"NancyCredential\"]}"
 	var baseCred map[string]interface{}
 	err = json.Unmarshal([]byte(baseCredString), &baseCred)
 	if err != nil {
@@ -1054,10 +1062,10 @@ func (o *Command) AcceptEnrolment(rw io.Writer, req io.Reader) command.Error {
 		return command.NewValidationError(AcceptEnrolmentRequestErrorCode, fmt.Errorf("failed to parse identity proofs into credential subject %w", err))
 	}
 	//baseCred["credentialSubject"] = credSubject
-	baseCred["credentialSubject"] = make(map[string]string, len(credSubject))
+	baseCred["credentialSubject"] = make(map[string]interface{}, len(credSubject))
 
 	for k, v := range credSubject {
-		baseCred["credentialSubject"].(map[string]string)[k] = v.(string)
+		baseCred["credentialSubject"].(map[string]interface{})[k] = v
 	}
 
 	//Get DID/DIDDoc for specifying key, issuer...
@@ -1113,12 +1121,14 @@ func (o *Command) AcceptEnrolment(rw io.Writer, req io.Reader) command.Error {
 	err = o.vcwalletcommand.Issue(&issueResponse, reader)
 
 	if err != nil {
+		logutil.LogInfo(logger, CommandName, AcceptEnrolmentCommandMethod, "error in issuance"+err.Error())
 		return command.NewValidationError(AcceptEnrolmentRequestErrorCode, fmt.Errorf("issuance error: %w", err))
 	}
 	logutil.LogInfo(logger, CommandName, AcceptEnrolmentCommandMethod, string(issueResponse.Bytes()))
 	var parsedResponse AcceptEnrolmentResult
 	err = json.NewDecoder(&issueResponse).Decode(&parsedResponse)
 	if err != nil {
+		logutil.LogInfo(logger, CommandName, AcceptEnrolmentCommandMethod, "error in parsing result"+err.Error())
 		return command.NewValidationError(AcceptEnrolmentRequestErrorCode, fmt.Errorf("issuance error: %w", err))
 	}
 	//Return result

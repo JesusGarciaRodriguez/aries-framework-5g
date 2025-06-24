@@ -1,0 +1,25 @@
+curl --location 'http://localhost:8082/nancy/idm/deriveProof' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "credId": "http://example/credentials/18723",
+    "nonce": "pavo",
+    "querybyframe": {
+        "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://ssiproject.inf.um.es/security/psms/v1",
+        "https://nancy-identity/context/exampleContext/v1",
+        "https://w3id.org/security/bbs/v1"
+        ],
+        "type": ["VerifiableCredential", "NancyCredential"],
+        "@explicit": true,
+        "identifier": {},
+        "issuer": {},
+        "issuanceDate": {},
+        "credentialSubject": {
+        "@explicit": true,
+        "nancyId": {},
+        "acces5g": {}
+        }
+    }
+}
+'
