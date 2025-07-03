@@ -76,8 +76,8 @@ func (o *Operation) registerHandler() {
 		cmdutil.NewHTTPHandler(ResolveDIDPath, http.MethodGet, o.ResolveDID),
 		cmdutil.NewHTTPHandler(CreateDIDPath, http.MethodPost, o.CreateDID),
 		cmdutil.NewHTTPHandler(GetDIDRecordsPath, http.MethodGet, o.GetDIDRecords),
-		cmdutil.NewHTTPHandler(GetDIDPath, http.MethodGet, o.GetDID),
 		cmdutil.NewHTTPHandler(CleanAllCachedDIDsPath, http.MethodGet, o.CleanAllCachedDIDs),
+		cmdutil.NewHTTPHandler(GetDIDPath, http.MethodGet, o.GetDID),
 	}
 }
 
