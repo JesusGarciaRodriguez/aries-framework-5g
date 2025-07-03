@@ -50,13 +50,13 @@ const (
 	CommandName = "vdr"
 
 	// command methods.
-	SaveDIDCommandMethod    = "SaveDID"
-	GetDIDsCommandMethod    = "GetDIDRecords"
-	GetDIDCommandMethod     = "GetDID"
-	ResolveDIDCommandMethod = "ResolveDID"
-	CreateDIDCommandMethod  = "CreateDID"
-	GetTrustedIssuerList    = "GetTrustedIssuerList"
-	CleanAllCachedDIDs      = "CleanAllCachedDIDs"
+	SaveDIDCommandMethod     = "SaveDID"
+	GetDIDsCommandMethod     = "GetDIDRecords"
+	GetDIDCommandMethod      = "GetDID"
+	ResolveDIDCommandMethod  = "ResolveDID"
+	CreateDIDCommandMethod   = "CreateDID"
+	GetTrustedIssuerList     = "GetTrustedIssuerList"
+	CleanAllCachedDIDsMethod = "CleanAllCachedDIDs"
 
 	// error messages.
 	errEmptyDIDName   = "name is mandatory"
@@ -102,7 +102,7 @@ func (o *Command) GetHandlers() []command.Handler {
 		cmdutil.NewCommandHandler(CommandName, ResolveDIDCommandMethod, o.ResolveDID),
 		cmdutil.NewCommandHandler(CommandName, CreateDIDCommandMethod, o.CreateDID),
 		cmdutil.NewCommandHandler(CommandName, GetTrustedIssuerList, o.GetTrustedIssuerList),
-		cmdutil.NewCommandHandler(CommandName, CleanAllCachedDIDs, o.CleanAllCachedDIDs),
+		cmdutil.NewCommandHandler(CommandName, CleanAllCachedDIDsMethod, o.CleanAllCachedDIDs),
 	}
 }
 
@@ -293,12 +293,12 @@ func (o *Command) GetDIDRecords(rw io.Writer, req io.Reader) command.Error {
 	return nil
 }
 
-// CleanAllCachedDIDs deletes al records in DID store and cahced DIDs in VDR. //TODO Add pagination feature #1566.
+// CleanAllCachedDIDs deletes al records in DID store and cahced DIDs in VDR.
 func (o *Command) CleanAllCachedDIDs(rw io.Writer, req io.Reader) command.Error {
 	err := o.didStore.DeleteDIDRecords()
 
 	if err != nil {
-		logutil.LogDebug(logger, CommandName, CleanAllCachedDIDs, "fail")
+		logutil.LogDebug(logger, CommandName, CleanAllCachedDIDsMethod, "fail")
 		command.WriteNillableResponse(rw, &CleanAllCachedDIDsResult{
 			Successful: false,
 			Error:      err,
@@ -309,7 +309,7 @@ func (o *Command) CleanAllCachedDIDs(rw io.Writer, req io.Reader) command.Error 
 	err = o.ctx.VDRegistry().CleanCaches()
 
 	if err != nil {
-		logutil.LogDebug(logger, CommandName, CleanAllCachedDIDs, "fail")
+		logutil.LogDebug(logger, CommandName, CleanAllCachedDIDsMethod, "fail")
 		command.WriteNillableResponse(rw, &CleanAllCachedDIDsResult{
 			Successful: false,
 			Error:      err,
@@ -317,7 +317,7 @@ func (o *Command) CleanAllCachedDIDs(rw io.Writer, req io.Reader) command.Error 
 		return nil
 	}
 
-	logutil.LogDebug(logger, CommandName, CleanAllCachedDIDs, "success")
+	logutil.LogDebug(logger, CommandName, CleanAllCachedDIDsMethod, "success")
 	command.WriteNillableResponse(rw, &CleanAllCachedDIDsResult{
 		Successful: true,
 	}, logger)
