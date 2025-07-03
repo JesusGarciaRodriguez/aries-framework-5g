@@ -55,7 +55,8 @@ const (
 	GetDIDCommandMethod     = "GetDID"
 	ResolveDIDCommandMethod = "ResolveDID"
 	CreateDIDCommandMethod  = "CreateDID"
-	GetTrustedIssuerList = "GetTrustedIssuerList"
+	GetTrustedIssuerList    = "GetTrustedIssuerList"
+	CleanAllCachedDIDs      = "CleanAllCachedDIDs"
 
 	// error messages.
 	errEmptyDIDName   = "name is mandatory"
@@ -101,6 +102,7 @@ func (o *Command) GetHandlers() []command.Handler {
 		cmdutil.NewCommandHandler(CommandName, ResolveDIDCommandMethod, o.ResolveDID),
 		cmdutil.NewCommandHandler(CommandName, CreateDIDCommandMethod, o.CreateDID),
 		cmdutil.NewCommandHandler(CommandName, GetTrustedIssuerList, o.GetTrustedIssuerList),
+		cmdutil.NewCommandHandler(CommandName, CleanAllCachedDIDs, o.CleanAllCachedDIDs),
 	}
 }
 
@@ -288,6 +290,37 @@ func (o *Command) GetDIDRecords(rw io.Writer, req io.Reader) command.Error {
 
 	logutil.LogDebug(logger, CommandName, GetDIDsCommandMethod, "success")
 
+	return nil
+}
+
+// CleanAllCachedDIDs deletes al records in DID store and cahced DIDs in VDR. //TODO Add pagination feature #1566.
+func (o *Command) CleanAllCachedDIDs(rw io.Writer, req io.Reader) command.Error {
+	err := o.didStore.DeleteDIDRecords()
+
+	if err != nil {
+		logutil.LogDebug(logger, CommandName, CleanAllCachedDIDs, "fail")
+		command.WriteNillableResponse(rw, &CleanAllCachedDIDsResult{
+			Successful: false,
+			Error:      err,
+		}, logger)
+		return nil
+	}
+
+	err = o.ctx.VDRegistry().CleanCaches()
+
+	if err != nil {
+		logutil.LogDebug(logger, CommandName, CleanAllCachedDIDs, "fail")
+		command.WriteNillableResponse(rw, &CleanAllCachedDIDsResult{
+			Successful: false,
+			Error:      err,
+		}, logger)
+		return nil
+	}
+
+	logutil.LogDebug(logger, CommandName, CleanAllCachedDIDs, "success")
+	command.WriteNillableResponse(rw, &CleanAllCachedDIDsResult{
+		Successful: true,
+	}, logger)
 	return nil
 }
 

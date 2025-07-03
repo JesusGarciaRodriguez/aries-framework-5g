@@ -167,6 +167,14 @@ func (r *Registry) resolveVDR(method string, opts ...vdrapi.DIDMethodOption) (vd
 	return nil, fmt.Errorf("did method %s not supported for vdr", method)
 }
 
+func (r *Registry) CleanCaches() error {
+	for _, v := range r.vdr {
+		v.CleanCache()
+	}
+
+	return nil
+}
+
 // WithVDR adds did method implementation for store.
 func WithVDR(method vdrapi.VDR) Option {
 	return func(opts *Registry) {

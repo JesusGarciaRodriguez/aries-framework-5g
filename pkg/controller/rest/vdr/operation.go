@@ -23,13 +23,14 @@ import (
 
 // constants for the VDR operations.
 const (
-	VDROperationID    = "/vdr"
-	vdrDIDPath        = VDROperationID + "/did"
-	SaveDIDPath       = vdrDIDPath
-	GetDIDPath        = vdrDIDPath + "/{id}"
-	ResolveDIDPath    = vdrDIDPath + "/resolve/{id}"
-	CreateDIDPath     = vdrDIDPath + "/create"
-	GetDIDRecordsPath = vdrDIDPath + "/records"
+	VDROperationID         = "/vdr"
+	vdrDIDPath             = VDROperationID + "/did"
+	SaveDIDPath            = vdrDIDPath
+	GetDIDPath             = vdrDIDPath + "/{id}"
+	ResolveDIDPath         = vdrDIDPath + "/resolve/{id}"
+	CreateDIDPath          = vdrDIDPath + "/create"
+	GetDIDRecordsPath      = vdrDIDPath + "/records"
+	CleanAllCachedDIDsPath = vdrDIDPath + "/cleanCaches"
 )
 
 // provider contains dependencies for the common controller operations
@@ -59,8 +60,9 @@ func New(ctx provider) (*Operation, error) {
 }
 
 func (o *Operation) GetVdrCommand() *vdr.Command {
-  return o.command
+	return o.command
 }
+
 // GetRESTHandlers get all controller API handler available for this service.
 func (o *Operation) GetRESTHandlers() []rest.Handler {
 	return o.handlers
@@ -75,6 +77,7 @@ func (o *Operation) registerHandler() {
 		cmdutil.NewHTTPHandler(CreateDIDPath, http.MethodPost, o.CreateDID),
 		cmdutil.NewHTTPHandler(GetDIDRecordsPath, http.MethodGet, o.GetDIDRecords),
 		cmdutil.NewHTTPHandler(GetDIDPath, http.MethodGet, o.GetDID),
+		cmdutil.NewHTTPHandler(CleanAllCachedDIDsPath, http.MethodGet, o.CleanAllCachedDIDs),
 	}
 }
 
@@ -83,8 +86,9 @@ func (o *Operation) registerHandler() {
 // Create a did document.
 //
 // Responses:
-//    default: genericError
-//        200: documentRes
+//
+//	default: genericError
+//	    200: documentRes
 func (o *Operation) CreateDID(rw http.ResponseWriter, req *http.Request) {
 	rest.Execute(o.command.CreateDID, rw, req.Body)
 }
@@ -94,7 +98,8 @@ func (o *Operation) CreateDID(rw http.ResponseWriter, req *http.Request) {
 // Saves a did document with the friendly name.
 //
 // Responses:
-//    default: genericError
+//
+//	default: genericError
 func (o *Operation) SaveDID(rw http.ResponseWriter, req *http.Request) {
 	rest.Execute(o.command.SaveDID, rw, req.Body)
 }
@@ -104,8 +109,9 @@ func (o *Operation) SaveDID(rw http.ResponseWriter, req *http.Request) {
 // Gets did document with the friendly name.
 //
 // Responses:
-//    default: genericError
-//        200: documentRes
+//
+//	default: genericError
+//	    200: documentRes
 func (o *Operation) GetDID(rw http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
 
@@ -122,11 +128,12 @@ func (o *Operation) GetDID(rw http.ResponseWriter, req *http.Request) {
 
 // ResolveDID swagger:route GET /vdr/did/resolve/{id} vdr resolveDIDReq
 //
-// Resolve did
+// # Resolve did
 //
 // Responses:
-//    default: genericError
-//        200: resolveDIDRes
+//
+//	default: genericError
+//	    200: resolveDIDRes
 func (o *Operation) ResolveDID(rw http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
 
@@ -143,11 +150,16 @@ func (o *Operation) ResolveDID(rw http.ResponseWriter, req *http.Request) {
 
 // GetDIDRecords swagger:route GET /vdr/did/records vdr getDIDRecords
 //
-// Retrieves the did records
+// # Retrieves the did records
 //
 // Responses:
-//    default: genericError
-//        200: didRecordResult
+//
+//	default: genericError
+//	    200: didRecordResult
 func (o *Operation) GetDIDRecords(rw http.ResponseWriter, req *http.Request) {
 	rest.Execute(o.command.GetDIDRecords, rw, req.Body)
+}
+
+func (o *Operation) CleanAllCachedDIDs(rw http.ResponseWriter, req *http.Request) {
+	rest.Execute(o.command.CleanAllCachedDIDs, rw, req.Body)
 }

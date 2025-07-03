@@ -49,3 +49,7 @@ func (v *VDR) Update(didDoc *diddoc.Doc, opts ...vdrapi.DIDMethodOption) error {
 func (v *VDR) Deactivate(didID string, opts ...vdrapi.DIDMethodOption) error {
 	return fmt.Errorf("not supported")
 }
+
+func (v *VDR) CleanCache() error {
+	return nil
+}

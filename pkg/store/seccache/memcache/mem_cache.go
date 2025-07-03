@@ -7,6 +7,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 )
 
+// TODO UMU Need to make this concurrent-safe (lock...)
 type MemSecureCache struct {
 	db map[string]*did.Doc
 	sync.RWMutex
@@ -42,4 +43,12 @@ func (c *MemSecureCache) RetrieveDidDoc(didID string) (bool, *did.Doc, error) {
 	}
 
 	return true, entry, nil
+}
+
+func (c *MemSecureCache) RemoveAll() error {
+	for k := range c.db {
+		delete(c.db, k)
+	}
+
+	return nil
 }

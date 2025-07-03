@@ -32,6 +32,7 @@ type Registry interface {
 	Create(method string, did *did.Doc, opts ...DIDMethodOption) (*did.DocResolution, error)
 	Update(did *did.Doc, opts ...DIDMethodOption) error
 	Deactivate(did string, opts ...DIDMethodOption) error
+	CleanCaches() error
 	Close() error
 }
 
@@ -44,6 +45,7 @@ type VDR interface {
 	Update(did *did.Doc, opts ...DIDMethodOption) error
 	Deactivate(did string, opts ...DIDMethodOption) error
 	Close() error
+	CleanCache() error //Cleans cached entries if the VDR has cache
 }
 
 // DIDMethodOpts did method opts.

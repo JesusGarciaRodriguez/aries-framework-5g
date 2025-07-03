@@ -52,3 +52,7 @@ func (v *VDR) Deactivate(did string, opts ...vdrapi.DIDMethodOption) error {
 func (v *VDR) Accept(method string, opts ...vdrapi.DIDMethodOption) bool {
 	return method == DIDMethod
 }
+
+func (v *VDR) CleanCache() error {
+	return nil
+}

@@ -152,6 +152,50 @@ func (s *Store) GetDIDRecords() []*Record {
 	return records
 }
 
+func (s *Store) DeleteDIDRecords() error {
+	itr, err := s.store.Query(didNameKey)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		errClose := itr.Close()
+		if errClose != nil {
+			logger.Errorf("failed to close iterator: %s", errClose.Error())
+		}
+	}()
+
+	var records []string
+
+	more, err := itr.Next()
+	if err != nil {
+		return nil
+	}
+
+	for more {
+		name, err := itr.Key()
+		if err != nil {
+			return nil
+		}
+
+		records = append(records, name)
+
+		more, err = itr.Next()
+		if err != nil {
+			return nil
+		}
+	}
+
+	for _, name := range records {
+		err = s.store.Delete(name)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func didNameDataKey(name string) string {
 	return fmt.Sprintf(didNameKeyPattern, name)
 }

@@ -257,3 +257,8 @@ func closeResponseBody(respBody io.Closer) {
 		logger.Errorf("Failed to close response body: %v", e)
 	}
 }
+
+func (v *VDR) CleanCache() error {
+	v.cache.RemoveAll()
+	return nil
+}

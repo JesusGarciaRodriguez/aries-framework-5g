@@ -44,3 +44,7 @@ func (v *VDR) Deactivate(did string, opts ...vdrapi.DIDMethodOption) error {
 func (v *VDR) Close() error {
 	return nil
 }
+
+func (v *VDR) CleanCache() error {
+	return nil
+}

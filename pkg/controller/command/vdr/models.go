@@ -26,7 +26,6 @@ type DIDArgs struct {
 // IDArg model
 //
 // This is used for querying/removing by did ID from input json.
-//
 type IDArg struct {
 	// DidID
 	ID string `json:"id"`
@@ -41,7 +40,6 @@ type DIDRecordResult struct {
 // NameArg model
 //
 // This is used for querying by did name from input json.
-//
 type NameArg struct {
 	// Name
 	Name string `json:"name"`
@@ -52,4 +50,10 @@ type CreateDIDRequest struct {
 	Method string                 `json:"method,omitempty"`
 	DID    json.RawMessage        `json:"did,omitempty"`
 	Opts   map[string]interface{} `json:"opts,omitempty"`
+}
+
+type CleanAllCachedDIDsResult struct {
+	// Result
+	Successful bool  `json:"successful"`
+	Error      error `json:"error,omitempty"`
 }

@@ -10,6 +10,8 @@ type SecureCache interface {
 	StoreDidDoc(document *did.Doc) error
 	//Retrieves Did document for a specific DID. It assumes (as other ARIES interfaces used) that the didID identifies the document, and not a specific key inside
 	RetrieveDidDoc(didID string) (bool, *did.Doc, error)
+	//Removes all values
+	RemoveAll() error
 }
 
 type NoOpSecureCache struct{}
@@ -24,4 +26,8 @@ func (c *NoOpSecureCache) StoreDidDoc(document *did.Doc) error {
 
 func (c *NoOpSecureCache) RetrieveDidDoc(didID string) (bool, *did.Doc, error) {
 	return false, nil, nil
+}
+
+func (c *NoOpSecureCache) RemoveAll() error {
+	return nil
 }
