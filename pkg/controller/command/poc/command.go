@@ -223,7 +223,7 @@ func (o *Command) NewDID(rw io.Writer, req io.Reader) command.Error {
 	}
 	token := getUnlockToken(l)
 	if token == "" {
-		return command.NewValidationError(NewDIDRequestErrorCode, fmt.Errorf("open wallet error decoding token"))
+		return command.NewExecuteError(NewDIDRequestErrorCode, fmt.Errorf("open wallet error decoding token"))
 	}
 	//Defer close wallet
 	defer func() {
@@ -240,7 +240,7 @@ func (o *Command) NewDID(rw io.Writer, req io.Reader) command.Error {
 		kt := parseKeyType(keyPurpose.KeyType)
 		if kt == "" {
 			logutil.LogInfo(logger, CommandName, NewDIDCommandMethod, "invalid key type")
-			return command.NewValidationError(InvalidRequestErrorCode, fmt.Errorf("invalid key type"))
+			return command.NewExecuteError(InvalidRequestErrorCode, fmt.Errorf("invalid key type"))
 		}
 		/*
 			//parse number of keypurpose.keytype.Attrs for increment in 1
@@ -263,12 +263,12 @@ func (o *Command) NewDID(rw io.Writer, req io.Reader) command.Error {
 		var getResponse bytes.Buffer
 		err = o.vcwalletcommand.CreateKeyPair(&getResponse, reader)
 		if err != nil {
-			return command.NewValidationError(NewDIDRequestErrorCode, fmt.Errorf("create key pair error: %w", err))
+			return command.NewExecuteError(NewDIDRequestErrorCode, fmt.Errorf("create key pair error: %w", err))
 		}
 		var parsedResponse vcwalletc.CreateKeyPairResponse
 		err = json.NewDecoder(&getResponse).Decode(&parsedResponse)
 		if err != nil {
-			return command.NewValidationError(NewDIDRequestErrorCode, fmt.Errorf("create key pair error: %w", err))
+			return command.NewExecuteError(NewDIDRequestErrorCode, fmt.Errorf("create key pair error: %w", err))
 		}
 
 		keyID := parsedResponse.KeyID
@@ -279,7 +279,7 @@ func (o *Command) NewDID(rw io.Writer, req io.Reader) command.Error {
 		rawKey, err := base64.RawURLEncoding.DecodeString(publicKeyb64)
 		if err != nil {
 			logutil.LogInfo(logger, CommandName, NewDIDCommandMethod, fmt.Sprintf("parse b64 key error: request: %v: response: %v %v", string(kt), parsedResponse.KeyID, parsedResponse.PublicKey))
-			return command.NewValidationError(NewDIDRequestErrorCode, fmt.Errorf("parse b64 key error: %w", err))
+			return command.NewExecuteError(NewDIDRequestErrorCode, fmt.Errorf("parse b64 key error: %w", err))
 		}
 
 		docKeyID := doc.ID + "#" + keyID
@@ -326,7 +326,7 @@ func (o *Command) NewDID(rw io.Writer, req io.Reader) command.Error {
 	fmt.Println(other)
 	if err != nil {
 		logutil.LogInfo(logger, CommandName, NewDIDCommandMethod, "failed to marshal DID Doc Request: "+err.Error())
-		return command.NewValidationError(NewDIDRequestErrorCode, fmt.Errorf("marshalling did document request: %w", err))
+		return command.NewExecuteError(NewDIDRequestErrorCode, fmt.Errorf("marshalling did document request: %w", err))
 	}
 	opts := make(map[string]interface{})
 	reader, err = getReader(&vdrc.CreateDIDRequest{
@@ -336,18 +336,18 @@ func (o *Command) NewDID(rw io.Writer, req io.Reader) command.Error {
 	})
 	err = o.vdrcommand.CreateDID(&l1, reader)
 	if err != nil {
-		return command.NewValidationError(NewDIDRequestErrorCode, fmt.Errorf("did creation error: %w", err))
+		return command.NewExecuteError(NewDIDRequestErrorCode, fmt.Errorf("did creation error: %w", err))
 	}
 	var parsedResponse vdrc.Document
 	err = json.NewDecoder(&l1).Decode(&parsedResponse)
 	if err != nil {
 		logutil.LogInfo(logger, CommandName, NewDIDCommandMethod, "failed to decode DID Document: "+err.Error())
-		return command.NewValidationError(NewDIDRequestErrorCode, fmt.Errorf("did creation response error: %w", err))
+		return command.NewExecuteError(NewDIDRequestErrorCode, fmt.Errorf("did creation response error: %w", err))
 	}
 	o.currentDID = getDID(parsedResponse)
 	if o.currentDID == "" {
 		logutil.LogInfo(logger, CommandName, NewDIDCommandMethod, "get did error: (empty did)")
-		return command.NewValidationError(NewDIDRequestErrorCode, fmt.Errorf("failed to parse id for future retrieval of document: %w", err))
+		return command.NewExecuteError(NewDIDRequestErrorCode, fmt.Errorf("failed to parse id for future retrieval of document: %w", err))
 	}
 	//Save DID
 	var l11 bytes.Buffer
@@ -356,11 +356,11 @@ func (o *Command) NewDID(rw io.Writer, req io.Reader) command.Error {
 		Name:     request.Name,
 	})
 	if err != nil {
-		return command.NewValidationError(NewDIDRequestErrorCode, fmt.Errorf("save did error: %w", err))
+		return command.NewExecuteError(NewDIDRequestErrorCode, fmt.Errorf("save did error: %w", err))
 	}
 	err = o.vdrcommand.SaveDID(&l11, reader)
 	if err != nil {
-		return command.NewValidationError(NewDIDRequestErrorCode, fmt.Errorf("save did error: %w", err))
+		return command.NewExecuteError(NewDIDRequestErrorCode, fmt.Errorf("save did error: %w", err))
 	}
 	// finished
 	command.WriteNillableResponse(rw, &NewDIDResult{DIDDoc: parsedResponse.DID}, logger)
@@ -390,15 +390,15 @@ func (o *Command) SignJWTContent(rw io.Writer, req io.Reader) command.Error {
 		LocalKMSPassphrase: o.walletpass,
 	})
 	if err != nil {
-		return command.NewValidationError(NewDIDRequestErrorCode, fmt.Errorf("open wallet error: %w", err))
+		return command.NewExecuteError(NewDIDRequestErrorCode, fmt.Errorf("open wallet error: %w", err))
 	}
 	err = o.vcwalletcommand.Open(&l, reader)
 	if err != nil {
-		return command.NewValidationError(NewDIDRequestErrorCode, fmt.Errorf("open wallet error: %w", err))
+		return command.NewExecuteError(NewDIDRequestErrorCode, fmt.Errorf("open wallet error: %w", err))
 	}
 	token := getUnlockToken(l)
 	if token == "" {
-		return command.NewValidationError(NewDIDRequestErrorCode, fmt.Errorf("open wallet error decoding token"))
+		return command.NewExecuteError(NewDIDRequestErrorCode, fmt.Errorf("open wallet error decoding token"))
 	}
 	//Defer close wallet
 	defer func() {
@@ -416,7 +416,7 @@ func (o *Command) SignJWTContent(rw io.Writer, req io.Reader) command.Error {
 	errUnmarshal := json.Unmarshal(request.Content, &content)
 	if errUnmarshal != nil {
 		fmt.Println("Error unmarshalling json.RawMessage:", err)
-		return command.NewValidationError(SignJWTContentErrorCode, fmt.Errorf("error unmarshalling json.RawMessage: %w", err))
+		return command.NewExecuteError(SignJWTContentErrorCode, fmt.Errorf("error unmarshalling json.RawMessage: %w", err))
 	}
 
 	reqJWT := vcwalletc.SignJWTRequest{
@@ -480,11 +480,11 @@ func (o *Command) VerifyJWTContent(rw io.Writer, req io.Reader) command.Error {
 	}
 	err = o.vcwalletcommand.Open(&l, reader)
 	if err != nil {
-		return command.NewValidationError(NewDIDRequestErrorCode, fmt.Errorf("open wallet error: %w", err))
+		return command.NewExecuteError(NewDIDRequestErrorCode, fmt.Errorf("open wallet error: %w", err))
 	}
 	token := getUnlockToken(l)
 	if token == "" {
-		return command.NewValidationError(NewDIDRequestErrorCode, fmt.Errorf("open wallet error decoding token"))
+		return command.NewExecuteError(NewDIDRequestErrorCode, fmt.Errorf("open wallet error decoding token"))
 	}
 	//Defer close wallet
 	defer func() {
@@ -642,7 +642,7 @@ func (o *Command) DoDeviceEnrolment(rw io.Writer, req io.Reader) command.Error {
 	token := getUnlockToken(l)
 	if token == "" {
 		logutil.LogInfo(logger, CommandName, DoDeviceEnrolmentCommandMethod, "could not get unlock token (empty token)")
-		return command.NewValidationError(DoDeviceEnrolmentRequestErrorCode, fmt.Errorf("open wallet error decoding token"))
+		return command.NewExecuteError(DoDeviceEnrolmentRequestErrorCode, fmt.Errorf("open wallet error decoding token"))
 	}
 	//Defer close wallet
 	defer func() {
@@ -664,7 +664,7 @@ func (o *Command) DoDeviceEnrolment(rw io.Writer, req io.Reader) command.Error {
 	fmt.Println(request.Url)
 	if err != nil {
 		logutil.LogInfo(logger, CommandName, DoDeviceEnrolmentCommandMethod, "could not generate request body")
-		return command.NewValidationError(DoDeviceEnrolmentRequestErrorCode, fmt.Errorf("could not generate request body: %w", err))
+		return command.NewExecuteError(DoDeviceEnrolmentRequestErrorCode, fmt.Errorf("could not generate request body: %w", err))
 	}
 
 	//testing https insecure(for poc at the moment)
@@ -677,7 +677,7 @@ func (o *Command) DoDeviceEnrolment(rw io.Writer, req io.Reader) command.Error {
 
 	if err != nil {
 		logutil.LogInfo(logger, CommandName, DoDeviceEnrolmentCommandMethod, "could not complete AcceptEnrolment POST request")
-		return command.NewValidationError(DoDeviceEnrolmentRequestErrorCode, fmt.Errorf("could not complete AcceptEnrolment POST request: %w", err))
+		return command.NewExecuteError(DoDeviceEnrolmentRequestErrorCode, fmt.Errorf("could not complete AcceptEnrolment POST request: %w", err))
 	}
 	// TODO Check Errors like 404 etc.
 	var res AcceptEnrolmentResult
@@ -687,14 +687,14 @@ func (o *Command) DoDeviceEnrolment(rw io.Writer, req io.Reader) command.Error {
 		if b, err := io.ReadAll(resp.Body); err == nil {
 			logutil.LogInfo(logger, CommandName, DoDeviceEnrolmentCommandMethod, string(b)) //added por alumno
 		}
-		return command.NewValidationError(DoDeviceEnrolmentRequestErrorCode, fmt.Errorf("could not parse AcceptEnrolment POST result: %w", err))
+		return command.NewExecuteError(DoDeviceEnrolmentRequestErrorCode, fmt.Errorf("could not parse AcceptEnrolment POST result: %w", err))
 	}
 	if len(res.Credential) == 0 { //TODO UMU Better error message
 		logutil.LogInfo(logger, CommandName, DoDeviceEnrolmentCommandMethod, "credential issuance was not completed")
 		if b, err := io.ReadAll(resp.Body); err == nil {
 			logutil.LogInfo(logger, CommandName, DoDeviceEnrolmentCommandMethod, "status "+resp.Status+"body "+string(b)) //added por alumno
 		}
-		return command.NewValidationError(DoDeviceEnrolmentRequestErrorCode, fmt.Errorf("credential issuance was not completed: %s", res))
+		return command.NewExecuteError(DoDeviceEnrolmentRequestErrorCode, fmt.Errorf("credential issuance was not completed: %s", res))
 	}
 
 	//Store cred in wallet
@@ -702,7 +702,7 @@ func (o *Command) DoDeviceEnrolment(rw io.Writer, req io.Reader) command.Error {
 
 	if err != nil {
 		logutil.LogInfo(logger, CommandName, DoDeviceEnrolmentCommandMethod, "could not serialize cred")
-		return command.NewValidationError(DoDeviceEnrolmentRequestErrorCode, fmt.Errorf("could not serialize cred: %w", err))
+		return command.NewExecuteError(DoDeviceEnrolmentRequestErrorCode, fmt.Errorf("could not serialize cred: %w", err))
 	}
 	logutil.LogInfo(logger, CommandName, DoDeviceEnrolmentCommandMethod, "credential", string(serialCred))
 
@@ -716,13 +716,13 @@ func (o *Command) DoDeviceEnrolment(rw io.Writer, req io.Reader) command.Error {
 	err = o.vcwalletcommand.Add(&getResponse, reader)
 	if err != nil {
 		logutil.LogInfo(logger, CommandName, DoDeviceEnrolmentCommandMethod, "store credential error")
-		return command.NewValidationError(DoDeviceEnrolmentRequestErrorCode, fmt.Errorf("store credential error: %w", err))
+		return command.NewExecuteError(DoDeviceEnrolmentRequestErrorCode, fmt.Errorf("store credential error: %w", err))
 	}
 	//Return cred
 	stoId, err := getContentID(serialCred)
 	if err != nil {
 		logutil.LogInfo(logger, CommandName, DoDeviceEnrolmentCommandMethod, "storage id error")
-		return command.NewValidationError(DoDeviceEnrolmentRequestErrorCode, fmt.Errorf("storage id error: %w", err))
+		return command.NewExecuteError(DoDeviceEnrolmentRequestErrorCode, fmt.Errorf("storage id error: %w", err))
 	}
 	command.WriteNillableResponse(rw, &DoDeviceEnrolmentResult{Credential: res.Credential, CredStorageId: stoId}, logger)
 	logutil.LogInfo(logger, CommandName, DoDeviceEnrolmentCommandMethod, "success")
@@ -756,7 +756,7 @@ func (o *Command) GetVCredential(rw io.Writer, req io.Reader) command.Error {
 	token := getUnlockToken(l)
 	if token == "" {
 		logutil.LogInfo(logger, CommandName, GenerateVPCommandMethod, "failed to get unlock token (empty token)")
-		return command.NewValidationError(GenerateVPRequestErrorCode, fmt.Errorf("open wallet error decoding token"))
+		return command.NewExecuteError(GenerateVPRequestErrorCode, fmt.Errorf("open wallet error decoding token"))
 	}
 	//Defer close wallet
 	defer func() {
@@ -777,16 +777,16 @@ func (o *Command) GetVCredential(rw io.Writer, req io.Reader) command.Error {
 	var getResponse bytes.Buffer
 	err = o.vcwalletcommand.Get(&getResponse, reader)
 	if err != nil {
-		return command.NewValidationError(GenerateVPRequestErrorCode, fmt.Errorf("retrieve credential error: %w", err))
+		return command.NewExecuteError(GenerateVPRequestErrorCode, fmt.Errorf("retrieve credential error: %w", err))
 	}
 	var parsedResponse vcwalletc.GetContentResponse
 	err = json.NewDecoder(&getResponse).Decode(&parsedResponse)
 	if err != nil {
-		return command.NewValidationError(GenerateVPRequestErrorCode, fmt.Errorf("retrieve credential error: %w", err))
+		return command.NewExecuteError(GenerateVPRequestErrorCode, fmt.Errorf("retrieve credential error: %w", err))
 	}
 
 	if err != nil {
-		return command.NewValidationError(GenerateVPRequestErrorCode, fmt.Errorf("failed to decode stored credential: %w", err))
+		return command.NewExecuteError(GenerateVPRequestErrorCode, fmt.Errorf("failed to decode stored credential: %w", err))
 	}
 
 	command.WriteNillableResponse(rw, &GetVCredentialResult{parsedResponse.Content}, logger)
@@ -829,7 +829,7 @@ func (o *Command) GenerateVP(rw io.Writer, req io.Reader) command.Error {
 	token := getUnlockToken(l)
 	if token == "" {
 		logutil.LogInfo(logger, CommandName, GenerateVPCommandMethod, "failed to get unlock token (empty token)")
-		return command.NewValidationError(GenerateVPRequestErrorCode, fmt.Errorf("open wallet error decoding token"))
+		return command.NewExecuteError(GenerateVPRequestErrorCode, fmt.Errorf("open wallet error decoding token"))
 	}
 	//Defer close wallet
 	defer func() {
@@ -850,16 +850,16 @@ func (o *Command) GenerateVP(rw io.Writer, req io.Reader) command.Error {
 	var getResponse bytes.Buffer
 	err = o.vcwalletcommand.Get(&getResponse, reader)
 	if err != nil {
-		return command.NewValidationError(GenerateVPRequestErrorCode, fmt.Errorf("retrieve credential error: %w", err))
+		return command.NewExecuteError(GenerateVPRequestErrorCode, fmt.Errorf("retrieve credential error: %w", err))
 	}
 	var parsedResponse vcwalletc.GetContentResponse
 	err = json.NewDecoder(&getResponse).Decode(&parsedResponse)
 	if err != nil {
-		return command.NewValidationError(GenerateVPRequestErrorCode, fmt.Errorf("retrieve credential error: %w", err))
+		return command.NewExecuteError(GenerateVPRequestErrorCode, fmt.Errorf("retrieve credential error: %w", err))
 	}
 
 	if err != nil {
-		return command.NewValidationError(GenerateVPRequestErrorCode, fmt.Errorf("failed to decode stored credential: %w", err))
+		return command.NewExecuteError(GenerateVPRequestErrorCode, fmt.Errorf("failed to decode stored credential: %w", err))
 	}
 
 	//treatment for selective disclosure frame (query by frame)
@@ -883,7 +883,7 @@ func (o *Command) GenerateVP(rw io.Writer, req io.Reader) command.Error {
 	var queryResponse bytes.Buffer
 	queryErr := o.vcwalletcommand.Query(&queryResponse, reader)
 	if queryErr != nil {
-		return command.NewValidationError(GenerateVPRequestErrorCode, fmt.Errorf("query response not working: %w", queryErr))
+		return command.NewExecuteError(GenerateVPRequestErrorCode, fmt.Errorf("query response not working: %w", queryErr))
 	}
 
 	var m runtime.MemStats
@@ -894,7 +894,7 @@ func (o *Command) GenerateVP(rw io.Writer, req io.Reader) command.Error {
 
 	err = json.Unmarshal(queryResponse.Bytes(), &queryParsedResponse)
 	if err != nil {
-		return command.NewValidationError(GenerateVPRequestErrorCode, fmt.Errorf("unmarshal not working: %w", err))
+		return command.NewExecuteError(GenerateVPRequestErrorCode, fmt.Errorf("unmarshal not working: %w", err))
 	}
 	logutil.LogInfo(logger, CommandName, GenerateVPCommandMethod, "Verifiable Presentation result response without unmarshall: "+queryResponse.String())
 
@@ -940,12 +940,7 @@ func (o *Command) VerifyCredential(rw io.Writer, req io.Reader) command.Error {
 	token := getUnlockToken(l)
 	if token == "" {
 		logutil.LogInfo(logger, CommandName, VerifyCredentialCommandMethod, "failed to get unlock token (empty token)")
-		return command.NewValidationError(VerifyCredentialRequestErrorCode, fmt.Errorf("open wallet error decoding token"))
-	}
-
-	if err != nil {
-		logutil.LogError(logger, CommandName, VerifyCredentialCommandMethod, "failed to marshal credential: "+err.Error())
-		return command.NewValidationError(VerifyCredentialRequestErrorCode, fmt.Errorf("failed to marshal credential: %w", err))
+		return command.NewExecuteError(VerifyCredentialRequestErrorCode, fmt.Errorf("open wallet error decoding token"))
 	}
 
 	var response vcwalletc.VerifyResponse
@@ -955,7 +950,7 @@ func (o *Command) VerifyCredential(rw io.Writer, req io.Reader) command.Error {
 		useCred = false
 		if request.Presentation == nil {
 			logutil.LogError(logger, CommandName, VerifyCredentialCommandMethod, "must include credential or presentation in request")
-			return command.NewValidationError(VerifyCredentialRequestErrorCode, fmt.Errorf("must include credential or presentation in request"))
+			return command.NewExecuteError(VerifyCredentialRequestErrorCode, fmt.Errorf("must include credential or presentation in request"))
 		}
 	}
 
@@ -974,7 +969,7 @@ func (o *Command) VerifyCredential(rw io.Writer, req io.Reader) command.Error {
 
 	//golang find and replace char in string
 	if err != nil {
-		return command.NewValidationError(VerifyCredentialRequestErrorCode, fmt.Errorf("failed to get Verify Request reader: %w", err))
+		return command.NewExecuteError(VerifyCredentialRequestErrorCode, fmt.Errorf("failed to get Verify Request reader: %w", err))
 	}
 	var l2 bytes.Buffer
 	err = o.vcwalletcommand.Verify(&l2, reader)
@@ -986,12 +981,12 @@ func (o *Command) VerifyCredential(rw io.Writer, req io.Reader) command.Error {
 	err = json.NewDecoder(&l2).Decode(&response)
 	if err != nil {
 		logutil.LogDebug(logger, CommandName, VerifyCredentialCommandMethod, "error in Decode verify Response")
-		return command.NewValidationError(VerifyCredentialRequestErrorCode, fmt.Errorf("failed to decode verify response: %w", err))
+		return command.NewExecuteError(VerifyCredentialRequestErrorCode, fmt.Errorf("failed to decode verify response: %w", err))
 	}
 	var result string
 	if !response.Verified {
 		result = "not verified"
-		//return command.NewValidationError(VerifyCredentialRequestErrorCode, fmt.Errorf("failed to verify credential: %s", response.Error))
+		//return command.NewExecuteError(VerifyCredentialRequestErrorCode, fmt.Errorf("failed to verify credential: %s", response.Error))
 		logutil.LogDebug(logger, CommandName, VerifyCredentialCommandMethod, "credential verified response: "+result)
 		command.WriteNillableResponse(rw, &VerifyCredentialResult{Result: false, Error: "not valid: " + response.Error}, logger)
 		return nil
@@ -1032,7 +1027,7 @@ func (o *Command) AcceptEnrolment(rw io.Writer, req io.Reader) command.Error {
 	token := getUnlockToken(l)
 	if token == "" {
 		logutil.LogInfo(logger, CommandName, AcceptEnrolmentCommandMethod, "could not get unlock token (empty token)")
-		return command.NewValidationError(GenerateVPRequestErrorCode, fmt.Errorf("open wallet error decoding token"))
+		return command.NewExecuteError(GenerateVPRequestErrorCode, fmt.Errorf("open wallet error decoding token"))
 	}
 	//Defer close wallet
 	defer func() {
@@ -1048,18 +1043,18 @@ func (o *Command) AcceptEnrolment(rw io.Writer, req io.Reader) command.Error {
 	err = json.Unmarshal([]byte(baseCredString), &baseCred)
 	if err != nil {
 		logutil.LogInfo(logger, CommandName, AcceptEnrolmentCommandMethod, "failed to decode base cred")
-		return command.NewValidationError(AcceptEnrolmentRequestErrorCode, fmt.Errorf("failed to decode base cred"))
+		return command.NewExecuteError(AcceptEnrolmentRequestErrorCode, fmt.Errorf("failed to decode base cred"))
 	}
 	//Validate IdProofs and generate credentialSubject from them
 	credSubject, validIdProofs, err := o.generateCredentialSubject(request.IdProofs)
 	if !validIdProofs {
 		logutil.LogInfo(logger, CommandName, AcceptEnrolmentCommandMethod, "failed to validate identity proofs")
 		//TODO UMU Write response indicating failed IdProof to client?
-		return command.NewValidationError(AcceptEnrolmentRequestErrorCode, fmt.Errorf("failed to validate identity proofs: %w", err))
+		return command.NewExecuteError(AcceptEnrolmentRequestErrorCode, fmt.Errorf("failed to validate identity proofs: %w", err))
 	}
 	if err != nil {
 		logutil.LogInfo(logger, CommandName, AcceptEnrolmentCommandMethod, "failed to parse identity proofs into credential subject")
-		return command.NewValidationError(AcceptEnrolmentRequestErrorCode, fmt.Errorf("failed to parse identity proofs into credential subject %w", err))
+		return command.NewExecuteError(AcceptEnrolmentRequestErrorCode, fmt.Errorf("failed to parse identity proofs into credential subject %w", err))
 	}
 	//baseCred["credentialSubject"] = credSubject
 	baseCred["credentialSubject"] = make(map[string]interface{}, len(credSubject))
@@ -1076,18 +1071,18 @@ func (o *Command) AcceptEnrolment(rw io.Writer, req io.Reader) command.Error {
 	err = o.vdrcommand.GetDID(&getResponse, reader)
 	if err != nil {
 		logutil.LogInfo(logger, CommandName, AcceptEnrolmentCommandMethod, "failed to get DID: "+err.Error())
-		return command.NewValidationError(AcceptEnrolmentRequestErrorCode, fmt.Errorf("retrieve did doc error: %w", err))
+		return command.NewExecuteError(AcceptEnrolmentRequestErrorCode, fmt.Errorf("retrieve did doc error: %w", err))
 	}
 	var parsedDoc vdrc.Document
 	err = json.NewDecoder(&getResponse).Decode(&parsedDoc)
 	if err != nil {
 		logutil.LogInfo(logger, CommandName, AcceptEnrolmentCommandMethod, "failed to decode DID Document: "+err.Error())
-		return command.NewValidationError(AcceptEnrolmentRequestErrorCode, fmt.Errorf("retrieve did doc error: %w", err))
+		return command.NewExecuteError(AcceptEnrolmentRequestErrorCode, fmt.Errorf("retrieve did doc error: %w", err))
 	}
 	didDoc, err := did.ParseDocument(parsedDoc.DID)
 	if err != nil {
 		logutil.LogInfo(logger, CommandName, AcceptEnrolmentCommandMethod, "failed to parse DID Document: "+err.Error())
-		return command.NewValidationError(AcceptEnrolmentRequestErrorCode, fmt.Errorf("retrieve did doc error: %w", err))
+		return command.NewExecuteError(AcceptEnrolmentRequestErrorCode, fmt.Errorf("retrieve did doc error: %w", err))
 	}
 	//Generate credential metadata: issuanceDate, expirationDate, id, issuer,
 	now := time.Now()
@@ -1100,7 +1095,7 @@ func (o *Command) AcceptEnrolment(rw io.Writer, req io.Reader) command.Error {
 	reqCred, err := json.Marshal(baseCred)
 	if err != nil {
 		logutil.LogInfo(logger, CommandName, AcceptEnrolmentCommandMethod, "failed to marshall credential request")
-		return command.NewValidationError(AcceptEnrolmentRequestErrorCode, fmt.Errorf("failed to marshall credential request %w", err))
+		return command.NewExecuteError(AcceptEnrolmentRequestErrorCode, fmt.Errorf("failed to marshall credential request %w", err))
 	}
 	proofRepr := verifiable.SignatureProofValue
 	logutil.LogInfo(logger, CommandName, AcceptEnrolmentCommandMethod, string(reqCred))
@@ -1115,21 +1110,21 @@ func (o *Command) AcceptEnrolment(rw io.Writer, req io.Reader) command.Error {
 	reader, err = getReader(issueRequest)
 	if err != nil {
 		logutil.LogInfo(logger, CommandName, AcceptEnrolmentCommandMethod, "failed to generate request for issue command")
-		return command.NewValidationError(AcceptEnrolmentRequestErrorCode, fmt.Errorf("failed to generate request for issue command: %w", err))
+		return command.NewExecuteError(AcceptEnrolmentRequestErrorCode, fmt.Errorf("failed to generate request for issue command: %w", err))
 	}
 	var issueResponse bytes.Buffer
 	err = o.vcwalletcommand.Issue(&issueResponse, reader)
 
 	if err != nil {
 		logutil.LogInfo(logger, CommandName, AcceptEnrolmentCommandMethod, "error in issuance"+err.Error())
-		return command.NewValidationError(AcceptEnrolmentRequestErrorCode, fmt.Errorf("issuance error: %w", err))
+		return command.NewExecuteError(AcceptEnrolmentRequestErrorCode, fmt.Errorf("issuance error: %w", err))
 	}
 	logutil.LogInfo(logger, CommandName, AcceptEnrolmentCommandMethod, string(issueResponse.Bytes()))
 	var parsedResponse AcceptEnrolmentResult
 	err = json.NewDecoder(&issueResponse).Decode(&parsedResponse)
 	if err != nil {
 		logutil.LogInfo(logger, CommandName, AcceptEnrolmentCommandMethod, "error in parsing result"+err.Error())
-		return command.NewValidationError(AcceptEnrolmentRequestErrorCode, fmt.Errorf("issuance error: %w", err))
+		return command.NewExecuteError(AcceptEnrolmentRequestErrorCode, fmt.Errorf("issuance error: %w", err))
 	}
 	//Return result
 	command.WriteNillableResponse(rw, &parsedResponse, logger)
@@ -1190,7 +1185,7 @@ func (o *Command) StoreCredential(rw io.Writer, req io.Reader) command.Error {
 	token := getUnlockToken(l)
 	if token == "" {
 		logutil.LogInfo(logger, CommandName, StoreCredentialCommandMethod, "failed to get unlock token (empty token)")
-		return command.NewValidationError(StoreCredentialRequestErrorCode, fmt.Errorf("open wallet error decoding token"))
+		return command.NewExecuteError(StoreCredentialRequestErrorCode, fmt.Errorf("open wallet error decoding token"))
 	}
 
 	if err != nil {
@@ -1244,7 +1239,7 @@ func (o *Command) DeriveProof(rw io.Writer, req io.Reader) command.Error {
 		LocalKMSPassphrase: o.walletpass,
 	})
 	if err != nil {
-		return command.NewValidationError(DeriveProofRequestErrorCode, fmt.Errorf("open wallet error: %w", err))
+		return command.NewExecuteError(DeriveProofRequestErrorCode, fmt.Errorf("open wallet error: %w", err))
 	}
 	err = o.vcwalletcommand.Open(&l, reader)
 	if err != nil {
@@ -1253,7 +1248,7 @@ func (o *Command) DeriveProof(rw io.Writer, req io.Reader) command.Error {
 	token := getUnlockToken(l)
 	if token == "" {
 		logutil.LogInfo(logger, CommandName, GenerateVPCommandMethod, "failed to get unlock token (empty token)")
-		return command.NewValidationError(DeriveProofRequestErrorCode, fmt.Errorf("open wallet error decoding token"))
+		return command.NewExecuteError(DeriveProofRequestErrorCode, fmt.Errorf("open wallet error decoding token"))
 	}
 	//Defer close wallet
 	defer func() {
@@ -1279,14 +1274,14 @@ func (o *Command) DeriveProof(rw io.Writer, req io.Reader) command.Error {
 	var queryResponse bytes.Buffer
 	queryErr := o.vcwalletcommand.Derive(&queryResponse, reader)
 	if queryErr != nil {
-		return command.NewValidationError(DeriveProofRequestErrorCode, fmt.Errorf("query response not working: %w", queryErr))
+		return command.NewExecuteError(DeriveProofRequestErrorCode, fmt.Errorf("query response not working: %w", queryErr))
 	}
 
 	var queryParsedResponse DeriveProofWalletResult
 
 	err = json.NewDecoder(&queryResponse).Decode(&queryParsedResponse)
 	if err != nil {
-		return command.NewValidationError(AcceptEnrolmentRequestErrorCode, fmt.Errorf("issuance error: %w", err))
+		return command.NewExecuteError(AcceptEnrolmentRequestErrorCode, fmt.Errorf("issuance error: %w", err))
 	}
 	//XXXX Return result
 	//command.WriteNillableResponse(rw, &queryParsedResponse, logger)
