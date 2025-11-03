@@ -23,6 +23,7 @@ import (
 	vdrapi "github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	"github.com/hyperledger/aries-framework-go/pkg/store/seccache"
 	"github.com/hyperledger/aries-framework-go/pkg/store/seccache/memcache"
+	remoteteecache "github.com/hyperledger/aries-framework-go/pkg/store/seccache/remote_tee_cache.go"
 )
 
 var logger = log.New("aries-framework/vdr/fabric")
@@ -41,6 +42,7 @@ const (
 	DefaultServiceEndpoint = "defaultServiceEndpoint"
 	didMethod              = "fabric"
 	CACHE_ENV_KEY          = "CACHE"
+	TEE_CACHE_URL_ENV_KEY  = "TEE_CACHE_URL"
 )
 
 // VDR via HTTP(s) endpoint.
@@ -74,6 +76,13 @@ func New(configURL string, opts ...Option) (*VDR, error) {
 		v.cache = cache
 	case "MEM":
 		cache, err := memcache.New()
+		if err != nil {
+			return nil, fmt.Errorf("create cache: %w", err)
+		}
+		v.cache = cache
+	case "TEE":
+		url, _ := os.LookupEnv(TEE_CACHE_URL_ENV_KEY)
+		cache, err := remoteteecache.New(url)
 		if err != nil {
 			return nil, fmt.Errorf("create cache: %w", err)
 		}
