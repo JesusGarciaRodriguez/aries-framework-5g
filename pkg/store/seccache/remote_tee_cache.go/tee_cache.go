@@ -131,6 +131,12 @@ func (c *RemoteTeeSecureCache) RetrieveDidDoc(didID string) (bool, *did.Doc, err
 		fmt.Println("Error parsing JSON:", err)
 		return false, nil, err
 	}
+
+	//Value lleva NODATA -> no existía
+	if result.Value == "NODATA" {
+		return false, nil, nil
+	}
+
 	// Print parsed response
 	//fmt.Println("\nParsed response:")
 	//fmt.Println("ID:", result.ID)
