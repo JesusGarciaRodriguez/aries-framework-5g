@@ -2,6 +2,7 @@ package remoteteecache
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -39,7 +40,7 @@ func (c *RemoteTeeSecureCache) StoreDidDoc(document *did.Doc) error {
 
 	data := map[string]string{
 		"id":    "diddocument-" + document.ID,
-		"value": string(serialDoc),
+		"value": base64.StdEncoding.EncodeToString(serialDoc),
 	}
 
 	serialData, err := json.Marshal(data)
@@ -141,7 +142,13 @@ func (c *RemoteTeeSecureCache) RetrieveDidDoc(didID string) (bool, *did.Doc, err
 	//fmt.Println("\nParsed response:")
 	//fmt.Println("ID:", result.ID)
 	//fmt.Println("Value:", result.Value)
-	doc, err := did.ParseDocument([]byte(result.Value))
+	data, err := base64.StdEncoding.DecodeString(result.Value)
+	if err != nil {
+		fmt.Println("Error decoding b64 json:", err)
+		return false, nil, err
+	}
+
+	doc, err := did.ParseDocument(data)
 	if err != nil {
 		fmt.Println("Error parsing Doc:", err)
 		return false, nil, err
